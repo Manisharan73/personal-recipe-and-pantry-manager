@@ -1,0 +1,127 @@
+.login-signup-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  background-image: url("https://i.pinimg.com/1200x/a5/4f/07/a54f07cce3814b66b1abd71c14eac08b.jpg");
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 400px;
+  padding: 40px;
+  background: #fff8f0;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  font-family: "Poppins", sans-serif;
+  position: relative;
+  overflow: hidden; /* hides form outside the container */
+}
+
+.form-container h1 {
+  margin-bottom: 25px;
+  color: #ff7043;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 25px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tab-label {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: #ffe0cc;
+  color: #555;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.tab-label.active {
+  background: #ff7043;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* SLIDER ANIMATION */
+.slider {
+  display: flex;
+  width: 200%;
+  transition: transform 0.6s ease-in-out;
+  will-change: transform;
+}
+
+.slider.login {
+  transform: translateX(0%);
+}
+
+.slider.signup {
+  transform: translateX(0%);
+}
+
+.forms {
+  display: flex;
+  width: 100%;
+  gap: 100px;
+  flex: 1;
+}
+
+.auth-form {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: left;
+  padding: 0 10px;
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.auth-form label {
+  color: #333;
+  font-weight: 500;
+}
+
+.auth-form input {
+  padding: 10px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.auth-form input:focus {
+  border-color: #ff7043;
+}
+
+.btn {
+  margin-top: 10px;
+  background: #ff7043;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background: #ff5722;
+}
