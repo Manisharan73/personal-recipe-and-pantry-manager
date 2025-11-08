@@ -1,7 +1,98 @@
+.hc-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    min-height: 100vh;
+}
+
 .home-container {
-  background-image: url("https://i.pinimg.com/1200x/a5/4f/07/a54f07cce3814b66b1abd71c14eac08b.jpg");
-  background-repeat: no-repeat;
-  background-size: cover;
-  width: 100vw;
-  height: 100vh;
+  max-width: 1000px;
+  margin: 50px auto;
+  padding: 30px;
+  background-color: #fffefb;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-family: "Poppins", sans-serif;
+}
+
+h1, h2 {
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 2rem;
+  color: #e67e22;
+}
+
+h2 {
+  font-size: 1.4rem;
+  margin-top: 40px;
+  border-bottom: 2px solid #f0c27b;
+  padding-bottom: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 0.95rem;
+  background-color: #fff;
+}
+
+table thead {
+  background-color: #ffe0b3;
+  color: #333;
+}
+
+table th, table td {
+  border: 1px solid #ddd;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+table tr:nth-child(even) {
+  background-color: #fff7ec;
+}
+
+table tr:hover {
+  background-color: #fef1e4;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 15px;
+}
+
+ul li {
+  background: #fffaf1;
+  margin: 8px 0;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border-left: 5px solid #f39c12;
+  transition: 0.2s ease;
+}
+
+ul li:hover {
+  transform: translateX(4px);
+  background-color: #fff3e0;
+}
+
+@media (max-width: 768px) {
+  .home-container {
+    width: 90%;
+    padding: 20px;
+  }
+
+  table th, table td {
+    font-size: 0.85rem;
+    padding: 8px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
 }
