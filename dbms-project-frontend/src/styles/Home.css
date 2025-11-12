@@ -1,9 +1,9 @@
 .hc-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100vw;
-    min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  min-height: 100vh;
 }
 
 .home-container {
@@ -74,6 +74,9 @@ ul li {
   border-radius: 8px;
   border-left: 5px solid #f39c12;
   transition: 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 ul li:hover {
@@ -82,8 +85,25 @@ ul li:hover {
 }
 
 .generate-btn {
-  margin-left: 10px;
   background-color: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-size: 0.9rem;
+  margin-left: 10px;
+}
+
+.generate-btn:hover {
+  background-color: #e67e22;
+  transform: scale(1.05);
+}
+
+/* NEW: Buy button for Shopping List */
+.buy-btn {
+  background-color: #27ae60; 
   color: white;
   border: none;
   border-radius: 6px;
@@ -93,8 +113,8 @@ ul li:hover {
   font-size: 0.9rem;
 }
 
-.generate-btn:hover {
-  background-color: #e67e22;
+.buy-btn:hover {
+  background-color: #2ecc71;
   transform: scale(1.05);
 }
 
@@ -107,6 +127,95 @@ ul li:hover {
   color: #856404;
   border: 1px solid #ffeeba;
   font-weight: 500;
+}
+
+.add-recipe-section {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #fffaf3;
+  border-radius: 12px;
+  border: 1px solid #f0d9b5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.add-recipe-section h2 {
+  text-align: left;
+  margin-bottom: 15px;
+  border: none;
+  font-size: 1.3rem;
+  color: #d35400;
+}
+
+.add-recipe-section form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-recipe-section input,
+.add-recipe-section select {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.add-recipe-section input:focus,
+.add-recipe-section select:focus {
+  outline: none;
+  border-color: #f39c12;
+  box-shadow: 0 0 5px rgba(243, 156, 18, 0.3);
+}
+
+.add-recipe-btn {
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 8px;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.add-recipe-btn:hover {
+  background-color: #e67e22;
+}
+
+/* NEW: Buy New Item button style */
+.buy-new-btn {
+  background-color: #3498db; 
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 8px;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.buy-new-btn:hover {
+  background-color: #2980b9;
+}
+
+
+.ingredient-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.ingredient-row input,
+.ingredient-row select {
+  flex: 1;
+  min-width: 140px;
 }
 
 @media (max-width: 768px) {
@@ -122,5 +231,28 @@ ul li:hover {
 
   h1 {
     font-size: 1.5rem;
+  }
+
+  .ingredient-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-recipe-section input,
+  .add-recipe-section select,
+  .ingredient-row input,
+  .ingredient-row select {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  ul li {
+      flex-direction: column;
+      align-items: flex-start;
+  }
+  .generate-btn {
+      margin-top: 8px;
+      margin-left: 0;
+      width: 100%;
   }
 }
