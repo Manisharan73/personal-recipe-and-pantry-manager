@@ -1,5 +1,5 @@
 import { React, useState } from "react";
-import api from "../axiosConfig"; // import the same api instance
+import api from "../axiosConfig";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login_SignUp.css";
 
@@ -16,7 +16,7 @@ const Login_SignUp = ({ setIsAuthenticated }) => {
     try {
       const res = await api.post("/signup", formData);
       alert(res.data.message);
-      setIsAuthenticated(true); // update state here
+      setIsAuthenticated(true);
       navigate("/");
     } catch (err) {
       alert(err.response?.data?.message || "Signup failed");
@@ -31,7 +31,7 @@ const Login_SignUp = ({ setIsAuthenticated }) => {
         password: formData.password,
       });
       alert(res.data.message);
-      setIsAuthenticated(true); // update state here
+      setIsAuthenticated(true);
       navigate("/");
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
