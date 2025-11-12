@@ -1,4 +1,4 @@
-import { React, useState } from "react";
+import { useState } from "react";
 import api from "../axiosConfig";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login_SignUp.css";
@@ -17,6 +17,7 @@ const Login_SignUp = ({ setIsAuthenticated }) => {
       const res = await api.post("/signup", formData);
       alert(res.data.message);
       setIsAuthenticated(true);
+      setFormData({ username: "", email: "", password: "" });
       navigate("/");
     } catch (err) {
       alert(err.response?.data?.message || "Signup failed");
@@ -32,6 +33,7 @@ const Login_SignUp = ({ setIsAuthenticated }) => {
       });
       alert(res.data.message);
       setIsAuthenticated(true);
+      setFormData({ username: "", email: "", password: "" });
       navigate("/");
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
@@ -58,62 +60,66 @@ const Login_SignUp = ({ setIsAuthenticated }) => {
           </button>
         </div>
 
-        <div className={`slider ${activeTab}`}>
-          <div className="forms">
-            {activeTab === "login" ? (
-              <form className="auth-form" onSubmit={handleLogin}>
-                <label>Email</label>
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  required
-                  onChange={handleChange}
-                />
-                <label>Password</label>
-                <input
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="Enter your password"
-                  required
-                  onChange={handleChange}
-                />
-                <button type="submit" className="btn">
-                  Login
-                </button>
-              </form>
-            ) : (
-              <form className="auth-form" onSubmit={handleSignup}>
-                <label>Username</label>
-                <input
-                  name="username"
-                  type="text"
-                  placeholder="Enter your username"
-                  required
-                  onChange={handleChange}
-                />
-                <label>Email</label>
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  required
-                  onChange={handleChange}
-                />
-                <label>Password</label>
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  required
-                  onChange={handleChange}
-                />
-                <button type="submit" className="btn">
-                  Sign Up
-                </button>
-              </form>
-            )}
+        <div className="slider">
+          <div className={`forms ${activeTab}`}>
+            {/* Login Form */}
+            <form className="auth-form" onSubmit={handleLogin}>
+              <label>Email</label>
+              <input
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+                required
+                onChange={handleChange}
+                value={formData.email}
+              />
+              <label>Password</label>
+              <input
+                name="password"
+                type="password"
+                placeholder="Enter your password"
+                required
+                onChange={handleChange}
+                value={formData.password}
+              />
+              <button type="submit" className="btn">
+                Login
+              </button>
+            </form>
+
+            {/* Signup Form */}
+            <form className="auth-form" onSubmit={handleSignup}>
+              <label>Username</label>
+              <input
+                name="username"
+                type="text"
+                placeholder="Enter your username"
+                required
+                onChange={handleChange}
+                value={formData.username}
+              />
+              <label>Email</label>
+              <input
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+                required
+                onChange={handleChange}
+                value={formData.email}
+              />
+              <label>Password</label>
+              <input
+                name="password"
+                type="password"
+                placeholder="Enter your password"
+                required
+                onChange={handleChange}
+                value={formData.password}
+              />
+              <button type="submit" className="btn">
+                Sign Up
+              </button>
+            </form>
           </div>
         </div>
       </div>

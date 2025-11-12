@@ -9,12 +9,15 @@ from mysql.connector import Error
 import traceback
 
 app = Flask(__name__)
+# IMPORTANT: Adjust origins for production
 CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
+# IMPORTANT: Change this key to a secure, complex value in production
 app.config["SECRET_KEY"] = "fanime@2006"
 
 
 def get_db_connection():
+    """Establishes and returns a database connection."""
     return mysql.connector.connect(
         host="localhost",
         user="root",
@@ -22,7 +25,7 @@ def get_db_connection():
         database="project"
     )
 
-# --- USER AUTH ROUTES ---
+# --- USER AUTH ROUTES 🔐 ---
 
 @app.route("/signup", methods=["POST"])
 def signup():
@@ -34,32 +37,35 @@ def signup():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM users WHERE email=%s OR username=%s", (email, username))
-    if cursor.fetchone():
+    try:
+        cursor.execute("SELECT * FROM users WHERE email=%s OR username=%s", (email, username))
+        if cursor.fetchone():
+            return jsonify({"message": "User already exists"}), 400
+
+        hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        user_id = str(uuid.uuid4())
+
+        cursor.execute(
+            "INSERT INTO users (id, username, email, password_hash, created_at) VALUES (%s, %s, %s, %s, %s)",
+            (user_id, username, email, hashed.decode("utf-8"), datetime.datetime.utcnow()),
+        )
+        conn.commit()
+
+        token = jwt.encode(
+            {"user_id": user_id, "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)},
+            app.config["SECRET_KEY"],
+            algorithm="HS256",
+        )
+
+        resp = make_response(jsonify({"message": "Signup successful"}))
+        resp.set_cookie("token", token, httponly=True, samesite="Lax")
+        return resp, 201
+    except Error as e:
+        print(f"Database Error: {e}")
+        return jsonify({"error": "A database error occurred during signup"}), 500
+    finally:
         cursor.close()
         conn.close()
-        return jsonify({"message": "User already exists"}), 400
-
-    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-    user_id = str(uuid.uuid4())
-
-    cursor.execute(
-        "INSERT INTO users (id, username, email, password_hash, created_at) VALUES (%s, %s, %s, %s, %s)",
-        (user_id, username, email, hashed.decode("utf-8"), datetime.datetime.utcnow()),
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    token = jwt.encode(
-        {"user_id": user_id, "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)},
-        app.config["SECRET_KEY"],
-        algorithm="HS256",
-    )
-
-    resp = make_response(jsonify({"message": "Signup successful"}))
-    resp.set_cookie("token", token, httponly=True, samesite="Lax")
-    return resp, 201
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -69,24 +75,29 @@ def login():
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-    user = cursor.fetchone()
+    
+    try:
+        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
+        user = cursor.fetchone()
 
-    cursor.close()
-    conn.close()
+        if not user or not bcrypt.checkpw(password.encode("utf-8"), user["password_hash"].encode("utf-8")):
+            return jsonify({"message": "Invalid email or password"}), 401
 
-    if not user or not bcrypt.checkpw(password.encode("utf-8"), user["password_hash"].encode("utf-8")):
-        return jsonify({"message": "Invalid email or password"}), 401
+        token = jwt.encode(
+            {"user_id": user["id"], "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)},
+            app.config["SECRET_KEY"],
+            algorithm="HS256",
+        )
 
-    token = jwt.encode(
-        {"user_id": user["id"], "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)},
-        app.config["SECRET_KEY"],
-        algorithm="HS256",
-    )
-
-    resp = make_response(jsonify({"message": "Login successful"}))
-    resp.set_cookie("token", token, httponly=True, samesite="Lax")
-    return resp, 200
+        resp = make_response(jsonify({"message": "Login successful"}))
+        resp.set_cookie("token", token, httponly=True, samesite="Lax")
+        return resp, 200
+    except Exception as e:
+        print(f"Error during login: {e}")
+        return jsonify({"error": "An error occurred during login"}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route("/verify-token", methods=["GET"])
 def verify_token():
@@ -94,14 +105,13 @@ def verify_token():
     if not token:
         return jsonify({"logged_in": False}), 401
 
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
     try:
         decoded = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE id = %s", (decoded["user_id"],))
+        cursor.execute("SELECT username FROM users WHERE id = %s", (decoded["user_id"],))
         user = cursor.fetchone()
-        cursor.close()
-        conn.close()
 
         if not user:
             return jsonify({"logged_in": False}), 401
@@ -112,8 +122,13 @@ def verify_token():
         return jsonify({"logged_in": False, "message": "Token expired"}), 401
     except jwt.InvalidTokenError:
         return jsonify({"logged_in": False, "message": "Invalid Token"}), 401
+    except Exception:
+        return jsonify({"logged_in": False, "message": "Verification error"}), 401
+    finally:
+        cursor.close()
+        conn.close()
 
-# --- GET DATA ROUTES ---
+# --- GET DATA ROUTES 🥗 ---
 
 @app.route("/get-pantry", methods=["GET"])
 def get_pantry():
@@ -128,31 +143,38 @@ def get_pantry():
             """
         )
         rows = cursor.fetchall()
-        cursor.close()
-        conn.close()
         return jsonify(rows)
     except Exception as e:
         print("MySQL Error:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route("/pantry/<user_id>", methods=["GET"])
 def get_pantry_by_user(user_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute(
-        """
-        SELECT pantry.id, pantry.ingredient_id, pantry.quantity, pantry.unit, pantry.expiration_date, ingredient.name AS name
-        FROM pantry
-        JOIN ingredient ON pantry.ingredient_id = ingredient.id
-        WHERE pantry.user_id = %s
-        """,
-        (user_id,),
-    )
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return jsonify(rows), 200
+    try:
+        cursor.execute(
+            """
+            SELECT pantry.id, pantry.ingredient_id, pantry.quantity, pantry.unit, 
+                   pantry.expiration_date, ingredient.name AS name
+            FROM pantry
+            JOIN ingredient ON pantry.ingredient_id = ingredient.id
+            WHERE pantry.user_id = %s
+            """,
+            (user_id,),
+        )
+        rows = cursor.fetchall()
+        return jsonify(rows), 200
+    except Exception as e:
+        print(f"Error getting pantry for user {user_id}: {e}")
+        return jsonify({"error": "Failed to fetch pantry items"}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route("/ingredients", methods=["GET"])
 def get_all_ingredients():
@@ -162,69 +184,86 @@ def get_all_ingredients():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT id, name FROM ingredient ORDER BY name") 
         rows = cursor.fetchall()
-        cursor.close()
-        conn.close()
         return jsonify(rows), 200
     except Exception as e:
         print("MySQL Error:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 
 @app.route("/recipes/<user_id>", methods=["GET"])
 def get_recipes(user_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM recipe WHERE user_id = %s", (user_id,))
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return jsonify(rows), 200
+    try:
+        cursor.execute("SELECT * FROM recipe WHERE user_id = %s", (user_id,))
+        rows = cursor.fetchall()
+        return jsonify(rows), 200
+    except Exception as e:
+        print(f"Error getting recipes for user {user_id}: {e}")
+        return jsonify({"error": "Failed to fetch recipes"}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route("/recipe-ingredients/<user_id>", methods=["GET"])
 def get_recipe_ingredients(user_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute(
-        """
-        SELECT ri.id, ri.quantity, ri.unit, r.title AS recipe_title, i.name AS ingredient_name
-        FROM recipe_ingredient ri
-        JOIN recipe r ON ri.recipe_id = r.id
-        JOIN ingredient i ON ri.ingredient_id = i.id
-        WHERE r.user_id = %s
-        """,
-        (user_id,),
-    )
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return jsonify(rows), 200
+    try:
+        cursor.execute(
+            """
+            SELECT ri.id, ri.quantity, ri.unit, r.title AS recipe_title, i.name AS ingredient_name
+            FROM recipe_ingredient ri
+            JOIN recipe r ON ri.recipe_id = r.id
+            JOIN ingredient i ON ri.ingredient_id = i.id
+            WHERE r.user_id = %s
+            """,
+            (user_id,),
+        )
+        rows = cursor.fetchall()
+        return jsonify(rows), 200
+    except Exception as e:
+        print(f"Error getting recipe ingredients for user {user_id}: {e}")
+        return jsonify({"error": "Failed to fetch recipe ingredients"}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route("/shopping-list/<user_id>", methods=["GET"])
 def get_shopping_list(user_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute(
-        """
-        SELECT sl.id, sl.quantity, sl.unit, i.name AS ingredient_name, sl.ingredient_id
-        FROM shopping_list sl
-        JOIN ingredient i ON sl.ingredient_id = i.id
-        WHERE sl.user_id = %s
-        """,
-        (user_id,),
-    )
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return jsonify(rows), 200
+    try:
+        cursor.execute(
+            """
+            SELECT sl.id, sl.quantity, sl.unit, i.name AS ingredient_name, sl.ingredient_id
+            FROM shopping_list sl
+            JOIN ingredient i ON sl.ingredient_id = i.id
+            WHERE sl.user_id = %s
+            """,
+            (user_id,),
+        )
+        rows = cursor.fetchall()
+        return jsonify(rows), 200
+    except Exception as e:
+        print(f"Error getting shopping list for user {user_id}: {e}")
+        return jsonify({"error": "Failed to fetch shopping list"}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
-# --- POST/UPDATE ROUTES (abbreviated for length, focusing on new/modified) ---
+# --- POST/UPDATE/DELETE ROUTES 🛒 ---
 
-# ... (add_pantry_item, add_ingredient, add_recipe, generate_shopping_list remain the same) ...
+# NOTE: add_pantry_item, add_ingredient routes are not provided in the prompt but are 
+# essential for full functionality. Assuming they exist or are covered by buy-new-item.
 
 @app.route("/buy-item/<user_id>/<item_id>", methods=["POST"])
 def buy_item(user_id, item_id):
-    # This remains the same, handles shopping list checkout
+    """Handles checking out an item from the shopping list and adding it to the pantry."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -237,8 +276,6 @@ def buy_item(user_id, item_id):
         item = cursor.fetchone()
 
         if not item:
-            cursor.close()
-            conn.close()
             return jsonify({"error": "Item not found in shopping list"}), 404
 
         cursor.execute("""
@@ -246,6 +283,7 @@ def buy_item(user_id, item_id):
         """, (user_id, item["ingredient_id"]))
         existing = cursor.fetchone()
 
+        # Default expiration of 30 days from purchase
         expiration_date = datetime.date.today() + datetime.timedelta(days=30)
         
         if existing:
@@ -258,21 +296,23 @@ def buy_item(user_id, item_id):
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (pantry_id, user_id, item["ingredient_id"], item["quantity"], item["unit"], expiration_date))
 
+        # Delete from shopping list
         cursor.execute("DELETE FROM shopping_list WHERE id = %s", (item_id,))
 
         conn.commit()
-        cursor.close()
-        conn.close()
         return jsonify({"message": "Item purchased and added to pantry"}), 200
 
     except Exception as e:
         print("MySQL Error:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route("/buy-new-item", methods=["POST"])
 def buy_new_item():
-    # This remains the same, handles buying new items (new to pantry or new to DB)
+    """Handles buying an item not previously on the shopping list and adding it to the pantry."""
     data = request.json
     user_id = data.get("user_id")
     ingredient_name = data.get("name")
@@ -287,6 +327,7 @@ def buy_new_item():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
+        # 1. Find or create ingredient
         cursor.execute("SELECT id FROM ingredient WHERE name = %s", (ingredient_name,))
         ingredient_row = cursor.fetchone()
         ingredient_id = None
@@ -299,14 +340,15 @@ def buy_new_item():
                 "INSERT INTO ingredient (id, name, description) VALUES (%s, %s, %s)",
                 (ingredient_id, ingredient_name, f"Automatically added ingredient: {ingredient_name}"),
             )
-            print(f"New ingredient created: {ingredient_name} with ID {ingredient_id}")
             conn.commit()
 
+        # 2. Determine expiration date
         if exp_date_str:
             expiration_date = datetime.date.fromisoformat(exp_date_str)
         else:
             expiration_date = datetime.date.today() + datetime.timedelta(days=30)
 
+        # 3. Update or insert into pantry
         cursor.execute(
             "SELECT id, quantity FROM pantry WHERE user_id = %s AND ingredient_id = %s",
             (user_id, ingredient_id),
@@ -332,8 +374,6 @@ def buy_new_item():
             message = f"Pantry item added: {quantity} {unit} of {ingredient_name}."
 
         conn.commit()
-        cursor.close()
-        conn.close()
         return jsonify({"message": message}), 201
 
     except Error as e:
@@ -344,10 +384,13 @@ def buy_new_item():
         print("General Error:", e)
         traceback.print_exc()
         return jsonify({"error": f"Server error: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route("/recipe-ingredient", methods=["POST"])
 def add_recipe_ingredient():
-    # This remains the same, handles adding ingredient to a recipe
+    """Handles adding an ingredient to a specific recipe."""
     data = request.json
     recipe_id = data.get("recipe_id")
     ingredient_id = data.get("ingredient_id")
@@ -361,16 +404,13 @@ def add_recipe_ingredient():
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # Validation (simplified)
         cursor.execute("SELECT id FROM ingredient WHERE id = %s", (ingredient_id,))
         if not cursor.fetchone():
-            cursor.close()
-            conn.close()
             return jsonify({"error": "Invalid ingredient_id"}), 400
         
         cursor.execute("SELECT id FROM recipe WHERE id = %s", (recipe_id,))
         if not cursor.fetchone():
-            cursor.close()
-            conn.close()
             return jsonify({"error": "Invalid recipe_id"}), 400
 
         ri_id = str(uuid.uuid4())
@@ -379,13 +419,14 @@ def add_recipe_ingredient():
             (ri_id, recipe_id, ingredient_id, quantity, unit),
         )
         conn.commit()
-        cursor.close()
-        conn.close()
         return jsonify({"message": "Ingredient added to recipe successfully"}), 201
     except Exception as e:
         print("MySQL Error:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route("/recipe", methods=["POST"])
 def add_recipe():
@@ -408,8 +449,6 @@ def add_recipe():
             (recipe_id, user_id, title, description),
         )
         conn.commit()
-        cursor.close()
-        conn.close()
         return jsonify({"message": "Recipe created successfully", "recipe_id": recipe_id}), 201
     except Error as e:
         print("MySQL Error:", e)
@@ -419,6 +458,142 @@ def add_recipe():
         print("General Error:", e)
         traceback.print_exc()
         return jsonify({"error": f"Server error: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+# --- THE MODIFIED SHOPPING LIST GENERATION ROUTE (Fix for Expired Items) ---
+
+# --- THE MODIFIED SHOPPING LIST GENERATION ROUTE (WITH DELETION) ---
+
+@app.route("/generate-shopping-list/<user_id>", methods=["POST"])
+def generate_shopping_list(user_id):
+    """
+    Generates a shopping list based on missing recipe ingredients 
+    AND expiring pantry items. It also automatically deletes truly expired items.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        today = datetime.date.today()
+
+        # 1. DELETE TRULY EXPIRED ITEMS
+        # Items with expiration_date strictly LESS than today are removed from pantry.
+        cursor.execute(
+            """
+            DELETE FROM pantry
+            WHERE user_id = %s AND expiration_date < %s
+            """,
+            (user_id, today)
+        )
+        deleted_count = cursor.rowcount
+        print(f"Deleted {deleted_count} expired pantry items for user {user_id}.")
+
+        # 2. Clear existing shopping list for the user
+        cursor.execute("DELETE FROM shopping_list WHERE user_id = %s", (user_id,))
+        conn.commit()
+
+        # --- A. Check for EXPIRING Pantry Items (Still in Pantry, but close to expiration) ---
+        # Define the expiration threshold for buying replacements (e.g., 7 days from now)
+        # We use today's date + 7 days, and filter items that are NOT already expired (but will be soon).
+        expiration_threshold = today + datetime.timedelta(days=7)
+        
+        # Get ingredients that will expire soon (today or within 7 days)
+        cursor.execute(
+            """
+            SELECT p.ingredient_id, p.quantity, p.unit, i.name AS ingredient_name
+            FROM pantry p
+            JOIN ingredient i ON p.ingredient_id = i.id
+            WHERE p.user_id = %s AND p.expiration_date <= %s
+            """,
+            (user_id, expiration_threshold),
+        )
+        expiring_items = cursor.fetchall()
+        
+        shopping_list_items = {} # {ingredient_id: {qty, unit, name}}
+        
+        # Add expiring items to the shopping list (full replacement quantity)
+        for item in expiring_items:
+            shopping_list_items[item["ingredient_id"]] = {
+                "quantity": float(item["quantity"]),
+                "unit": item["unit"],
+                "name": item["ingredient_name"],
+            }
+
+        # --- B. Check for Missing Recipe Ingredients (Standard Logic) ---
+        
+        # Get total required ingredients for all user's recipes
+        cursor.execute(
+            """
+            SELECT ri.ingredient_id, ri.quantity, ri.unit
+            FROM recipe_ingredient ri
+            JOIN recipe r ON ri.recipe_id = r.id
+            WHERE r.user_id = %s
+            """,
+            (user_id,)
+        )
+        required_ingredients = cursor.fetchall()
+
+        # Get current (clean) pantry stock
+        cursor.execute(
+            "SELECT ingredient_id, quantity, unit FROM pantry WHERE user_id = %s",
+            (user_id,)
+        )
+        pantry_stock = {item["ingredient_id"]: float(item["quantity"]) for item in cursor.fetchall()}
+
+        
+        # Calculate missing quantities
+        for req in required_ingredients:
+            req_id = req["ingredient_id"]
+            required_qty = float(req["quantity"])
+            
+            # If item is already marked for replacement due to being close to expiration (A), skip.
+            if req_id in shopping_list_items:
+                continue
+
+            current_qty = pantry_stock.get(req_id, 0.0)
+            
+            missing_qty = required_qty - current_qty
+            
+            if missing_qty > 0:
+                # Get ingredient name
+                cursor.execute("SELECT name FROM ingredient WHERE id = %s", (req_id,))
+                ing_name = cursor.fetchone()
+                
+                shopping_list_items[req_id] = {
+                    "quantity": missing_qty,
+                    "unit": req["unit"],
+                    "name": ing_name["name"] if ing_name else "Unknown Ingredient",
+                }
+
+        # --- C. Insert final aggregated items into the shopping_list table ---
+        for ing_id, item_data in shopping_list_items.items():
+            sl_id = str(uuid.uuid4())
+            cursor.execute(
+                """
+                INSERT INTO shopping_list (id, user_id, ingredient_id, quantity, unit)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (sl_id, user_id, item_data["quantity"], item_data["unit"])
+            )
+
+        conn.commit()
+        
+        message = f"Shopping list generated successfully. {deleted_count} expired item(s) automatically deleted from pantry."
+        return jsonify({"message": message, "count": len(shopping_list_items)}), 200
+
+    except Error as e:
+        print("MySQL Error:", e)
+        traceback.print_exc()
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+    except Exception as e:
+        print("General Error:", e)
+        traceback.print_exc()
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 if __name__ == "__main__":
+    # IMPORTANT: Set debug=False in production
     app.run(debug=True)
