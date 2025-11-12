@@ -12,7 +12,7 @@
   padding: 30px;
   background-color: #fffefb;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); /* Slightly heavier shadow */
   font-family: "Poppins", sans-serif;
 }
 
@@ -23,15 +23,18 @@ h1, h2 {
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 2.2rem; /* Slightly larger */
   color: #e67e22;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 h2 {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   margin-top: 40px;
   border-bottom: 2px solid #f0c27b;
   padding-bottom: 8px;
+  color: #d35400; /* Darker orange for better contrast */
+  text-align: left; /* Align h2s to the left */
 }
 
 table {
@@ -40,17 +43,23 @@ table {
   margin-top: 15px;
   font-size: 0.95rem;
   background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden; /* For rounded corners on the table */
 }
 
 table thead {
-  background-color: #ffe0b3;
+  background-color: #ffcc80; /* Brighter header color */
   color: #333;
 }
 
 table th, table td {
-  border: 1px solid #ddd;
-  padding: 10px 12px;
-  text-align: center;
+  border: 1px solid #f0e6d2; /* Lighter border */
+  padding: 12px 15px; /* More padding */
+  text-align: left; /* Align table content to the left */
+}
+
+table th:last-child, table td:last-child {
+  text-align: center; /* Keep actions/quantities centered if needed */
 }
 
 table tr:nth-child(even) {
@@ -59,6 +68,7 @@ table tr:nth-child(even) {
 
 table tr:hover {
   background-color: #fef1e4;
+  transition: background-color 0.2s ease;
 }
 
 ul {
@@ -69,18 +79,20 @@ ul {
 
 ul li {
   background: #fffaf1;
-  margin: 8px 0;
-  padding: 12px 15px;
-  border-radius: 8px;
-  border-left: 5px solid #f39c12;
+  margin: 10px 0; /* More margin */
+  padding: 15px 20px; /* More padding */
+  border-radius: 10px; /* Rounder corners */
+  border-left: 6px solid #f39c12; /* Thicker border */
   transition: 0.2s ease;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 1.05rem; /* Slightly larger text */
 }
 
 ul li:hover {
-  transform: translateX(4px);
+  transform: translateY(-2px); /* Lift effect */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Subtle shadow on hover */
   background-color: #fff3e0;
 }
 
@@ -88,118 +100,133 @@ ul li:hover {
   background-color: #f39c12;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
+  border-radius: 8px; /* Rounder corners */
+  padding: 8px 16px; /* More padding */
   cursor: pointer;
   transition: 0.2s ease;
-  font-size: 0.9rem;
-  margin-left: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .generate-btn:hover {
   background-color: #e67e22;
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 /* NEW: Buy button for Shopping List */
 .buy-btn {
-  background-color: #27ae60; 
+  background-color: #27ae60;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
+  border-radius: 8px;
+  padding: 8px 16px;
   cursor: pointer;
   transition: 0.2s ease;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .buy-btn:hover {
   background-color: #2ecc71;
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
 .message-box {
   text-align: center;
-  margin: 10px 0;
-  padding: 10px;
+  margin: 15px 0; /* More margin */
+  padding: 15px;
   border-radius: 8px;
-  background-color: #fff3cd;
+  background-color: #fff8e1; /* Lighter background for message */
   color: #856404;
   border: 1px solid #ffeeba;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .add-recipe-section {
   margin-top: 40px;
-  padding: 20px;
-  background-color: #fffaf3;
+  padding: 25px; /* More padding */
+  background-color: #ffffff; /* White background for separation */
   border-radius: 12px;
   border: 1px solid #f0d9b5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.add-recipe-section:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
 .add-recipe-section h2 {
   text-align: left;
-  margin-bottom: 15px;
-  border: none;
-  font-size: 1.3rem;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #f0c27b;
+  padding-bottom: 8px;
+  font-size: 1.4rem;
   color: #d35400;
 }
 
 .add-recipe-section form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px; /* More space between form elements */
 }
 
 .add-recipe-section input,
 .add-recipe-section select {
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  padding: 12px 15px; /* More padding */
+  border-radius: 8px; /* Rounder corners */
+  border: 1px solid #ddd;
   font-family: inherit;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #fff;
 }
 
 .add-recipe-section input:focus,
 .add-recipe-section select:focus {
   outline: none;
   border-color: #f39c12;
-  box-shadow: 0 0 5px rgba(243, 156, 18, 0.3);
+  box-shadow: 0 0 8px rgba(243, 156, 18, 0.4);
 }
 
 .add-recipe-btn {
   background-color: #f39c12;
   color: white;
   border: none;
-  padding: 10px 14px;
-  border-radius: 6px;
+  padding: 12px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  margin-top: 8px;
-  font-weight: 500;
+  margin-top: 10px;
+  font-weight: 600;
+  font-size: 1rem;
   transition: 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Added shadow */
 }
 
 .add-recipe-btn:hover {
   background-color: #e67e22;
+  transform: translateY(-1px); /* Slight lift on hover */
 }
 
 /* NEW: Buy New Item button style */
 .buy-new-btn {
-  background-color: #3498db; 
+  background-color: #3498db;
   color: white;
   border: none;
-  padding: 10px 14px;
-  border-radius: 6px;
+  padding: 12px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  margin-top: 8px;
-  font-weight: 500;
+  margin-top: 10px;
+  font-weight: 600;
+  font-size: 1rem;
   transition: 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .buy-new-btn:hover {
   background-color: #2980b9;
+  transform: translateY(-1px);
 }
 
 
@@ -208,8 +235,8 @@ ul li:hover {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  margin-bottom: 10px;
-  gap: 8px;
+  margin-bottom: 0; /* Removed bottom margin, using form gap */
+  gap: 10px;
 }
 
 .ingredient-row input,
@@ -218,10 +245,20 @@ ul li:hover {
   min-width: 140px;
 }
 
+/* Ensure the submit button in ingredient-row spans correctly */
+.ingredient-row .add-recipe-btn {
+    flex: 0 0 auto; /* Do not grow, base on content */
+    margin-top: 0; /* Align with inputs */
+    align-self: flex-end; /* Align the button to the bottom of the row items */
+    min-width: 150px;
+}
+
+/* Media Queries for Responsiveness */
 @media (max-width: 768px) {
   .home-container {
     width: 90%;
     padding: 20px;
+    margin: 30px auto;
   }
 
   table th, table td {
@@ -230,12 +267,17 @@ ul li:hover {
   }
 
   h1 {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
+  }
+  
+  h2 {
+    font-size: 1.3rem;
   }
 
   .ingredient-row {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px; /* Reduced gap */
   }
 
   .add-recipe-section input,
@@ -249,10 +291,18 @@ ul li:hover {
   ul li {
       flex-direction: column;
       align-items: flex-start;
+      gap: 10px;
   }
   .generate-btn {
-      margin-top: 8px;
+      margin-top: 0;
       margin-left: 0;
       width: 100%;
+      padding: 10px;
+  }
+
+  .ingredient-row .add-recipe-btn {
+      width: 100%;
+      min-width: 100%;
+      align-self: auto;
   }
 }

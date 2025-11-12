@@ -1,0 +1,145 @@
+/* General Layout Structure */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f7f7f7; /* Light background for the whole app */
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 250px;
+    background-color: #fffefb; /* Same as your old home-container */
+    padding: 30px 20px;
+    border-right: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #e67e22;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-grow: 1; /* Pushes the logout button to the bottom */
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #333;
+    padding: 12px 15px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    border-left: 5px solid transparent;
+}
+
+.nav-link:hover {
+    background-color: #fff3e0;
+    color: #e67e22;
+    border-left: 5px solid #f39c12;
+}
+
+.nav-link.active {
+    background-color: #ffe0b3;
+    color: #d35400;
+    font-weight: 700;
+    border-left: 5px solid #d35400;
+}
+
+.logout-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s ease;
+    margin-top: 30px;
+}
+
+.logout-btn:hover {
+    background-color: #c0392b;
+}
+
+/* Main Content Area */
+.content-area {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+/* Reusing your old home-container styling for the content wrapper */
+.content-wrapper {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 30px;
+    background-color: #fffefb;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    font-family: "Poppins", sans-serif;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .app-layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 15px 10px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .logo {
+        margin-bottom: 0;
+    }
+
+    .nav-links {
+        flex-direction: row;
+        gap: 10px;
+        flex-grow: unset;
+        margin: 0 15px;
+    }
+
+    .nav-link {
+        padding: 8px 12px;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+    }
+    .nav-link:hover {
+        border-left: none;
+        border-bottom: 3px solid #f39c12;
+    }
+    .nav-link.active {
+        border-left: none;
+        border-bottom: 3px solid #d35400;
+        background-color: transparent;
+    }
+
+    .logout-btn {
+        margin-top: 0;
+        padding: 8px;
+    }
+    
+    .content-area {
+        padding: 10px;
+    }
+    .content-wrapper {
+        margin: 10px auto;
+        padding: 15px;
+    }
+}

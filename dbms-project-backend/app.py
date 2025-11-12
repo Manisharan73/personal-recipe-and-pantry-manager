@@ -128,6 +128,14 @@ def verify_token():
         cursor.close()
         conn.close()
 
+@app.route("/logout", methods=["POST"])
+def logout():
+    """Removes the authentication cookie (JWT) to log the user out."""
+    resp = make_response(jsonify({"message": "Logged out successfully"}), 200)
+    # The key to logging out is setting the cookie's expiration to a past date
+    resp.set_cookie("token", "", expires=0, httponly=True, samesite="Lax")
+    return resp
+    
 # --- GET DATA ROUTES 🥗 ---
 
 @app.route("/get-pantry", methods=["GET"])
@@ -160,7 +168,7 @@ def get_pantry_by_user(user_id):
         cursor.execute(
             """
             SELECT pantry.id, pantry.ingredient_id, pantry.quantity, pantry.unit, 
-                   pantry.expiration_date, ingredient.name AS name
+                    pantry.expiration_date, ingredient.name AS name
             FROM pantry
             JOIN ingredient ON pantry.ingredient_id = ingredient.id
             WHERE pantry.user_id = %s
@@ -257,9 +265,6 @@ def get_shopping_list(user_id):
         conn.close()
 
 # --- POST/UPDATE/DELETE ROUTES 🛒 ---
-
-# NOTE: add_pantry_item, add_ingredient routes are not provided in the prompt but are 
-# essential for full functionality. Assuming they exist or are covered by buy-new-item.
 
 @app.route("/buy-item/<user_id>/<item_id>", methods=["POST"])
 def buy_item(user_id, item_id):
@@ -462,8 +467,6 @@ def add_recipe():
         cursor.close()
         conn.close()
 
-# --- THE MODIFIED SHOPPING LIST GENERATION ROUTE (Fix for Expired Items) ---
-
 # --- THE MODIFIED SHOPPING LIST GENERATION ROUTE (WITH DELETION) ---
 
 @app.route("/generate-shopping-list/<user_id>", methods=["POST"])
@@ -514,11 +517,13 @@ def generate_shopping_list(user_id):
         
         # Add expiring items to the shopping list (full replacement quantity)
         for item in expiring_items:
-            shopping_list_items[item["ingredient_id"]] = {
-                "quantity": float(item["quantity"]),
-                "unit": item["unit"],
-                "name": item["ingredient_name"],
-            }
+            # Only add to the list if they are not already past today's date (those should have been deleted)
+            if item["quantity"] > 0: 
+                 shopping_list_items[item["ingredient_id"]] = {
+                    "quantity": float(item["quantity"]),
+                    "unit": item["unit"],
+                    "name": item["ingredient_name"],
+                }
 
         # --- B. Check for Missing Recipe Ingredients (Standard Logic) ---
         
@@ -567,15 +572,22 @@ def generate_shopping_list(user_id):
                 }
 
         # --- C. Insert final aggregated items into the shopping_list table ---
+        insert_statements = []
         for ing_id, item_data in shopping_list_items.items():
             sl_id = str(uuid.uuid4())
-            cursor.execute(
+            # Prepare the arguments tuple for the execute call
+            insert_statements.append((sl_id, user_id, ing_id, item_data["quantity"], item_data["unit"]))
+        
+        if insert_statements:
+            # Use executemany for efficiency
+            cursor.executemany(
                 """
                 INSERT INTO shopping_list (id, user_id, ingredient_id, quantity, unit)
                 VALUES (%s, %s, %s, %s, %s)
                 """,
-                (sl_id, user_id, item_data["quantity"], item_data["unit"])
+                insert_statements
             )
+
 
         conn.commit()
         
