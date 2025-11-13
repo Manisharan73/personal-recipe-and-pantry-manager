@@ -38,6 +38,10 @@
     background-color: var(--bg-app);
 }
 
+.sidebar-wrapper {
+    width: 250px;
+}
+
 /* Sidebar Styling */
 .sidebar {
     width: 250px;

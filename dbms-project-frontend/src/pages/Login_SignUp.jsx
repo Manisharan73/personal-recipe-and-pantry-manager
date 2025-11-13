@@ -3,7 +3,7 @@ import api from "../axiosConfig";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login_SignUp.css";
 
-const Login_SignUp = ({ setIsAuthenticated, setUserId }) => { // MODIFIED: Destructure setUserId
+const Login_SignUp = ({ setIsAuthenticated, setUserId }) => {
   const [activeTab, setActiveTab] = useState("login");
   const [formData, setFormData] = useState({ username: "", email: "", password: "" });
   const navigate = useNavigate();
@@ -16,8 +16,6 @@ const Login_SignUp = ({ setIsAuthenticated, setUserId }) => { // MODIFIED: Destr
     try {
       const res = await api.post("/signup", formData);
       alert(res.data.message);
-      // NOTE: The /signup endpoint currently only returns a cookie, 
-      // the /verify-token call in App.jsx handles setting userId after redirect.
       setIsAuthenticated(true);
       setFormData({ username: "", email: "", password: "" });
       navigate("/");
@@ -35,7 +33,7 @@ const Login_SignUp = ({ setIsAuthenticated, setUserId }) => { // MODIFIED: Destr
       });
       alert(res.data.message);
       setIsAuthenticated(true);
-      setUserId(res.data.user_id); // NEW: Save user_id immediately after login
+      setUserId(res.data.user_id);
       setFormData({ username: "", email: "", password: "" });
       navigate("/");
     } catch (err) {
@@ -65,7 +63,6 @@ const Login_SignUp = ({ setIsAuthenticated, setUserId }) => { // MODIFIED: Destr
 
         <div className="slider">
           <div className={`forms ${activeTab}`}>
-            {/* Login Form */}
             <form className="auth-form" onSubmit={handleLogin}>
               <label>Email</label>
               <input
@@ -90,7 +87,6 @@ const Login_SignUp = ({ setIsAuthenticated, setUserId }) => { // MODIFIED: Destr
               </button>
             </form>
 
-            {/* Signup Form */}
             <form className="auth-form" onSubmit={handleSignup}>
               <label>Username</label>
               <input

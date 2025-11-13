@@ -1,7 +1,4 @@
-/* --- Global Variables (Light Mode Default) --- */
 :root {
-    /* Variables from Layout: --bg-app, --bg-sidebar, --bg-content-box, --text-primary, --text-accent, --border-list-base */
-
     --bg-card: #fffefb;
     --bg-expiring: #fff3e0;
     --bg-list-item: #fffaf1;
@@ -16,7 +13,6 @@
     --text-message: #856404;
 }
 
-/* --- Dark Mode Overrides for Content --- */
 .dark {
     --bg-card: #2d2d2d;
     --bg-expiring: #4a382e;
@@ -32,8 +28,6 @@
     --text-message: #ffb86c;
 }
 
-/* --- Core Page Styles (Uses Variables) --- */
-
 .hc-wrapper {
     display: flex;
     justify-content: center;
@@ -43,7 +37,6 @@
 }
 
 .home-container {
-    /* Style used for reference/deprecated */
     max-width: 200vw;
     margin: 50px auto;
     padding: 30px;
@@ -277,7 +270,6 @@ table {
     display: none;
 }
 
-/* --- Card Styles --- */
 .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -327,7 +319,6 @@ table {
     background-color: var(--bg-expiring); 
 }
 
-/* Specific style to override inline color set in Pantry.jsx */
 .card-detail[style*="e67e22"] {
     color: var(--text-expiring) !important;
 }

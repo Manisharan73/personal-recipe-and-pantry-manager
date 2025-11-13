@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../axiosConfig"; 
 import "../styles/Home.css"; 
 
-const Pantry = ({ userId }) => { // Accept userId as prop
+const Pantry = ({ userId }) => {
     const [pantry, setPantry] = useState([]);
     const [message, setMessage] = useState("");
     const [newPantryItem, setNewPantryItem] = useState({
@@ -12,12 +12,18 @@ const Pantry = ({ userId }) => { // Accept userId as prop
         expiration_date: "", 
     });
 
+    const [pantryIngredientNames, setPantryIngredientNames] = useState([]); 
+
     const fetchPantry = async () => {
         try {
-            // Note: API call is now simply /pantry as user_id is handled by decorator
             const pantryRes = await api.get(`/pantry`); 
-            setPantry(pantryRes.data);
+            const fetchedPantry = pantryRes.data;
+            setPantry(fetchedPantry);
             setMessage(""); 
+
+            const uniqueNames = [...new Set(fetchedPantry.map(item => item.name))].sort();
+            setPantryIngredientNames(uniqueNames);
+
         } catch (err) {
             console.error("Failed to fetch pantry:", err);
             setMessage("Failed to load pantry items.");
@@ -29,7 +35,6 @@ const Pantry = ({ userId }) => { // Accept userId as prop
         const today = new Date();
         const expiration = new Date(expirationDate);
         const diffDays = (expiration - today) / (1000 * 60 * 60 * 24);
-        // Item is expiring if it's not past today and is within the next 7 days
         return diffDays > 0 && diffDays <= 7;
     };
 
@@ -49,7 +54,6 @@ const Pantry = ({ userId }) => { // Accept userId as prop
         try {
             const res = await api.post("/buy-new-item", {
                 name: newPantryItem.name,
-                // Ensure quantity is parsed as float before sending
                 quantity: parseFloat(newPantryItem.quantity),
                 unit: newPantryItem.unit,
                 expiration_date: newPantryItem.expiration_date || null,
@@ -62,8 +66,7 @@ const Pantry = ({ userId }) => { // Accept userId as prop
             setMessage(`Failed to add item to pantry: ${err.response?.data?.error || err.message}`);
         }
     };
-    
-    // --- NEW DELETE HANDLER ---
+
     const handleDeletePantryItem = async (itemId, itemName) => {
         if (!window.confirm(`Are you sure you want to delete ${itemName} from your pantry?`)) {
             return;
@@ -71,33 +74,37 @@ const Pantry = ({ userId }) => { // Accept userId as prop
         try {
             await api.delete(`/pantry/${itemId}`);
             setMessage(`${itemName} successfully deleted from pantry.`);
-            // Optimistic update: remove item from state
             setPantry(prevPantry => prevPantry.filter(item => item.id !== itemId));
         } catch (err) {
             console.error("Error deleting item:", err);
             setMessage(`Failed to delete item: ${err.response?.data?.error || err.message}`);
         }
     };
-    // --- END NEW DELETE HANDLER ---
 
     return (
         <>
             <h1>🧺 My Pantry</h1>
             {message && <p className="message-box">{message}</p>}
 
-            {/* --- Buy New Ingredient Form --- */}
             <div className="add-recipe-section">
-                <h2>🛍️ Add New Ingredient to Stock</h2>
+                <h2>🛍️ Add New/More Ingredient to Stock</h2>
                 <form onSubmit={handleBuyNewPantryItem}>
                     <div className="ingredient-row">
                         <input
                             type="text"
                             placeholder="Ingredient Name (e.g., Flour)"
                             aria-label="Ingredient Name"
+                            list="pantry-ingredient-names" 
                             value={newPantryItem.name}
                             onChange={(e) => setNewPantryItem({ ...newPantryItem, name: e.target.value })}
                             required
                         />
+                        <datalist id="pantry-ingredient-names"> 
+                            {pantryIngredientNames.map((name, index) => (
+                                <option key={index} value={name} />
+                            ))}
+                        </datalist>
+                        
                         <input
                             type="number"
                             placeholder="Quantity"
@@ -127,8 +134,7 @@ const Pantry = ({ userId }) => { // Accept userId as prop
                     </div>
                 </form>
             </div>
-            
-            {/* --- Pantry Stock Card Display (MODIFIED) --- */}
+
             <h2>📦 Current Pantry Stock</h2>
             <div className="card-grid">
                 {pantry.length > 0 ? (

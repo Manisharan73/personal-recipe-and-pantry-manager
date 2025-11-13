@@ -79,8 +79,7 @@ const Recipes = ({ userId }) => {
             setMessage(`Failed to add recipe ingredient: ${err.response?.data?.error || err.message}`);
         }
     };
-    
-    // --- NEW DELETE HANDLER ---
+
     const handleDeleteRecipe = async (recipeId, recipeTitle) => {
         if (!window.confirm(`Are you sure you want to delete the recipe: ${recipeTitle}? This will also remove all its ingredients.`)) {
             return;
@@ -88,15 +87,31 @@ const Recipes = ({ userId }) => {
         try {
             const res = await api.delete(`/recipe/${recipeId}`);
             setMessage(res.data.message);
-            // Re-fetch all data to update both recipe list and recipe ingredients detail
             await fetchData();
         } catch (err) {
             console.error("Error deleting recipe:", err);
             setMessage(`Failed to delete recipe: ${err.response?.data?.error || err.message}`);
         }
     };
-    // --- END NEW DELETE HANDLER ---
-    
+    const handleCookRecipe = async (recipeId, recipeTitle) => {
+        if (!window.confirm(`Are you sure you want to cook ${recipeTitle}? This will deduct the required ingredients from your pantry.`)) {
+            return;
+        }
+        
+        try {
+            const res = await api.post(`/cook-recipe/${recipeId}`);
+            setMessage(res.data.message);
+
+            await api.post("/generate-shopping-list");
+
+            await fetchData();
+            
+        } catch (err) {
+            console.error("Error cooking recipe:", err);
+            setMessage(`Failed to cook recipe: ${err.response?.data?.error || err.message}`);
+        }
+    };
+
     const navigateToShoppingListAndRegenerate = () => {
         setMessage("Recipe modification noted! Please navigate to the Shopping List and click 'Regenerate List' to update supplies needed.");
     };
@@ -107,7 +122,6 @@ const Recipes = ({ userId }) => {
             <h1>📖 My Recipes</h1>
             {message && <p className="message-box">{message}</p>}
 
-            {/* --- Create New Recipe Section --- */}
             <div className="add-recipe-section">
                 <h2>📝 Create New Recipe</h2>
                 <form onSubmit={handleAddRecipe}>
@@ -136,12 +150,10 @@ const Recipes = ({ userId }) => {
                 </form>
             </div>
 
-            {/* --- Add Ingredient to Existing Recipe Section --- */}
             <div className="add-recipe-section">
                 <h2>➕ Add Ingredient to Recipe</h2>
                 <form onSubmit={handleAddRecipeIngredient}>
                     <div className="ingredient-row">
-                        {/* Select Recipe */}
                         <select
                             value={newRecipeIng.recipe_id}
                             onChange={(e) =>
@@ -158,7 +170,6 @@ const Recipes = ({ userId }) => {
                             ))}
                         </select>
 
-                        {/* Select Ingredient */}
                         <select
                             value={newRecipeIng.ingredient_id}
                             onChange={(e) =>
@@ -175,7 +186,6 @@ const Recipes = ({ userId }) => {
                             ))}
                         </select>
 
-                        {/* Quantity */}
                         <input
                             type="number"
                             placeholder="Quantity"
@@ -186,7 +196,7 @@ const Recipes = ({ userId }) => {
                             required
                             aria-label="Quantity"
                         />
-                        {/* Unit */}
+
                         <input
                             type="text"
                             placeholder="Unit (e.g., g, ml, tsp)"
@@ -204,8 +214,6 @@ const Recipes = ({ userId }) => {
                 </form>
             </div>
 
-
-            {/* --- Recipes List (MODIFIED) --- */}
             <h2>🏠 My Saved Recipes</h2>
             <ul>
                 {recipes.map((r) => (
@@ -217,6 +225,14 @@ const Recipes = ({ userId }) => {
                             </p>
                         </div>
                         <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                className="buy-btn"
+                                onClick={() => handleCookRecipe(r.id, r.title)}
+                                style={{ backgroundColor: '#2980b9' }} 
+                            >
+                                Cook 🍽️
+                            </button>
+                            
                             <button
                                 className="generate-btn"
                                 onClick={navigateToShoppingListAndRegenerate}
@@ -234,7 +250,6 @@ const Recipes = ({ userId }) => {
                 ))}
             </ul>
 
-            {/* --- Recipe Ingredients Detail Card Display --- */}
             <h2>📋 Recipe Ingredients Detail</h2>
             <div className="card-grid">
                 {recipeIngredients.length > 0 ? (

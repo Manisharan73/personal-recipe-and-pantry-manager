@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../axiosConfig";
 import "../styles/Home.css";
 
-const ShoppingList = ({ userId }) => { // MODIFIED: Accept userId as prop
+const ShoppingList = ({ userId }) => {
     const [shoppingList, setShoppingList] = useState([]);
     const [message, setMessage] = useState("");
 
@@ -31,7 +31,6 @@ const ShoppingList = ({ userId }) => { // MODIFIED: Accept userId as prop
             const res = await api.post(`/buy-item/${itemId}`);
             setMessage(res.data.message);
 
-            // Optimistic update
             setShoppingList(prevList => prevList.filter(item => item.id !== itemId));
 
             setTimeout(() => {
@@ -50,7 +49,6 @@ const ShoppingList = ({ userId }) => { // MODIFIED: Accept userId as prop
                 <h1>🛒 Shopping List</h1>
                 {message && <p className="message-box">{message}</p>}
 
-                {/* --- List Header and Regenerate Button (Unchanged) --- */}
                 <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     Items Needed
                     <button
@@ -62,7 +60,6 @@ const ShoppingList = ({ userId }) => { // MODIFIED: Accept userId as prop
                     </button>
                 </h2>
 
-                {/* --- Shopping List Card Display (NEW UI) --- */}
                 <div className="card-grid">
                     {shoppingList.length > 0 ? (
                         shoppingList.map((item) => (
@@ -87,9 +84,6 @@ const ShoppingList = ({ userId }) => { // MODIFIED: Accept userId as prop
                         </p>
                     )}
                 </div>
-
-                {/* Old table is kept but hidden by CSS */}
-                {/* <table>...</table> */}
             </div>
         </>
     );
