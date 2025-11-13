@@ -3,7 +3,7 @@ import api from "../axiosConfig";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login_SignUp.css";
 
-const Login_SignUp = ({ setIsAuthenticated }) => {
+const Login_SignUp = ({ setIsAuthenticated, setUserId }) => { // MODIFIED: Destructure setUserId
   const [activeTab, setActiveTab] = useState("login");
   const [formData, setFormData] = useState({ username: "", email: "", password: "" });
   const navigate = useNavigate();
@@ -16,6 +16,8 @@ const Login_SignUp = ({ setIsAuthenticated }) => {
     try {
       const res = await api.post("/signup", formData);
       alert(res.data.message);
+      // NOTE: The /signup endpoint currently only returns a cookie, 
+      // the /verify-token call in App.jsx handles setting userId after redirect.
       setIsAuthenticated(true);
       setFormData({ username: "", email: "", password: "" });
       navigate("/");
@@ -33,6 +35,7 @@ const Login_SignUp = ({ setIsAuthenticated }) => {
       });
       alert(res.data.message);
       setIsAuthenticated(true);
+      setUserId(res.data.user_id); // NEW: Save user_id immediately after login
       setFormData({ username: "", email: "", password: "" });
       navigate("/");
     } catch (err) {

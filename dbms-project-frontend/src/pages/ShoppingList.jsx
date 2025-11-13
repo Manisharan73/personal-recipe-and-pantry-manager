@@ -2,22 +2,16 @@ import React, { useEffect, useState } from "react";
 import api from "../axiosConfig";
 import "../styles/Home.css";
 
-// NOTE: In a real app, userId should be retrieved from JWT/Context.
-const userId = "93f5fed8-c2cd-4e70-a7a4-19b3a9506b25"; 
-
-const ShoppingList = () => {
+const ShoppingList = ({ userId }) => { // MODIFIED: Accept userId as prop
     const [shoppingList, setShoppingList] = useState([]);
     const [message, setMessage] = useState("");
 
-    // 1. Regeneration logic separated
     const regenerateAndFetchShoppingList = async () => {
         setMessage("Generating shopping list...");
         try {
-            // Force regeneration of the shopping list
-            const res = await api.post(`/generate-shopping-list/${userId}`);
-            
-            // Fetch the newly generated list
-            const shoppingRes = await api.get(`/shopping-list/${userId}`);
+            const res = await api.post(`/generate-shopping-list`);
+
+            const shoppingRes = await api.get(`/shopping-list`);
             setShoppingList(shoppingRes.data);
             setMessage(res.data.message || "Shopping list regenerated successfully.");
         } catch (err) {
@@ -25,23 +19,23 @@ const ShoppingList = () => {
             setMessage(`Failed to regenerate shopping list: ${err.response?.data?.error || err.message}`);
         }
     };
-    
+
     useEffect(() => {
-        regenerateAndFetchShoppingList(); // Fetch and regenerate on load
-    }, []);
+        if (userId) {
+            regenerateAndFetchShoppingList();
+        }
+    }, [userId]);
 
     const handleBuyShoppingItem = async (itemId) => {
         try {
-            // Note: This endpoint should handle both updating the pantry and removing the item from the list
-            const res = await api.post(`/buy-item/${userId}/${itemId}`);
+            const res = await api.post(`/buy-item/${itemId}`);
             setMessage(res.data.message);
-            
-            // Optimistic update for faster UI response:
+
+            // Optimistic update
             setShoppingList(prevList => prevList.filter(item => item.id !== itemId));
 
-            // Small delay to show optimistic update before a full refresh (optional, but good UX)
             setTimeout(() => {
-                regenerateAndFetchShoppingList(); 
+                regenerateAndFetchShoppingList();
             }, 500);
 
         } catch (err) {
@@ -52,57 +46,51 @@ const ShoppingList = () => {
 
     return (
         <>
-            <h1>🛒 Shopping List</h1>
-            {message && <p className="message-box">{message}</p>}
+            <div className="sl-wrapper">
+                <h1>🛒 Shopping List</h1>
+                {message && <p className="message-box">{message}</p>}
 
-            {/* --- List Header and Regenerate Button --- */}
-            <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                Items Needed 
-                <button 
-                    onClick={regenerateAndFetchShoppingList} 
-                    className="generate-btn"
-                    style={{ margin: 0 }} // Override any default margin from h2 styling
-                >
-                    🔁 Regenerate List
-                </button>
-            </h2>
+                {/* --- List Header and Regenerate Button (Unchanged) --- */}
+                <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    Items Needed
+                    <button
+                        onClick={regenerateAndFetchShoppingList}
+                        className="generate-btn"
+                        style={{ margin: 0 }}
+                    >
+                        🔁 Regenerate List
+                    </button>
+                </h2>
 
-            {/* --- Shopping List Table --- */}
-            <table>
-                <thead>
-                    <tr>
-                        <th style={{ width: '40%' }}>Ingredient</th>
-                        <th style={{ width: '20%' }}>Quantity</th>
-                        <th style={{ width: '20%' }}>Unit</th>
-                        <th style={{ width: '20%', textAlign: 'center' }}>Action</th> 
-                    </tr>
-                </thead>
-                <tbody>
+                {/* --- Shopping List Card Display (NEW UI) --- */}
+                <div className="card-grid">
                     {shoppingList.length > 0 ? (
                         shoppingList.map((item) => (
-                            <tr key={item.id}>
-                                <td>{item.ingredient_name}</td>
-                                <td>{item.quantity}</td>
-                                <td>{item.unit}</td>
-                                <td style={{ textAlign: 'center' }}>
+                            <div key={item.id} className="card">
+                                <div className="card-content">
+                                    <p className="card-title">{item.ingredient_name}</p>
+                                    <p className="card-detail"><strong>Quantity:</strong> {item.quantity} {item.unit}</p>
+                                </div>
+                                <div className="card-actions">
                                     <button
                                         className="buy-btn"
                                         onClick={() => handleBuyShoppingItem(item.id)}
                                     >
                                         Buy ✅
                                     </button>
-                                </td>
-                            </tr>
+                                </div>
+                            </div>
                         ))
                     ) : (
-                        <tr>
-                            <td colSpan="4" style={{ textAlign: 'center', padding: '20px', fontStyle: 'italic', color: '#666' }}>
-                                🎉 Your shopping list is empty! Ready to cook!
-                            </td>
-                        </tr>
+                        <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '20px', fontStyle: 'italic', color: '#666' }}>
+                            🎉 Your shopping list is empty! Ready to cook!
+                        </p>
                     )}
-                </tbody>
-            </table>
+                </div>
+
+                {/* Old table is kept but hidden by CSS */}
+                {/* <table>...</table> */}
+            </div>
         </>
     );
 };

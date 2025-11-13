@@ -2,10 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../axiosConfig";
 import "../styles/Home.css";
 
-// NOTE: In a real app, userId should be retrieved from JWT/Context.
-const userId = "93f5fed8-c2cd-4e70-a7a4-19b3a9506b25"; 
-
-const Recipes = () => {
+const Recipes = ({ userId }) => { 
     const [recipes, setRecipes] = useState([]);
     const [recipeIngredients, setRecipeIngredients] = useState([]);
     const [allIngredients, setAllIngredients] = useState([]); 
@@ -22,8 +19,8 @@ const Recipes = () => {
     const fetchData = async () => {
         try {
             const [recipeRes, recipeIngRes, allIngRes] = await Promise.all([
-                api.get(`/recipes/${userId}`),
-                api.get(`/recipe-ingredients/${userId}`),
+                api.get(`/recipes`),
+                api.get(`/recipe-ingredients`),
                 api.get(`/ingredients`), 
             ]);
 
@@ -38,21 +35,22 @@ const Recipes = () => {
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (userId) {
+            fetchData();
+        }
+    }, [userId]);
 
     const handleAddRecipe = async (e) => {
         e.preventDefault();
         try {
             await api.post("/recipe", {
-                user_id: userId,
                 title: newRecipe.title,
                 description: newRecipe.description,
                 ingredients: [],
             });
             setMessage("Recipe added successfully! Now add ingredients in the section below.");
             setNewRecipe({ title: "", description: "" });
-            await fetchData(); // Refresh list
+            await fetchData();
         } catch (err) {
             console.error("Error adding recipe:", err);
             setMessage(`Failed to add recipe: ${err.response?.data?.error || err.message}`);
@@ -75,17 +73,31 @@ const Recipes = () => {
                 quantity: "",
                 unit: "",
             });
-            await fetchData(); // Refresh list
+            await fetchData();
         } catch (err) {
             console.error("Error adding ingredient:", err);
             setMessage(`Failed to add recipe ingredient: ${err.response?.data?.error || err.message}`);
         }
     };
     
-    // Function to trigger regeneration on the Shopping List page
+    // --- NEW DELETE HANDLER ---
+    const handleDeleteRecipe = async (recipeId, recipeTitle) => {
+        if (!window.confirm(`Are you sure you want to delete the recipe: ${recipeTitle}? This will also remove all its ingredients.`)) {
+            return;
+        }
+        try {
+            const res = await api.delete(`/recipe/${recipeId}`);
+            setMessage(res.data.message);
+            // Re-fetch all data to update both recipe list and recipe ingredients detail
+            await fetchData();
+        } catch (err) {
+            console.error("Error deleting recipe:", err);
+            setMessage(`Failed to delete recipe: ${err.response?.data?.error || err.message}`);
+        }
+    };
+    // --- END NEW DELETE HANDLER ---
+    
     const navigateToShoppingListAndRegenerate = () => {
-        // Since we are decoupling, we just tell the user to navigate
-        // A full solution would use state management or a context hook to signal regeneration
         setMessage("Recipe modification noted! Please navigate to the Shopping List and click 'Regenerate List' to update supplies needed.");
     };
 
@@ -193,49 +205,52 @@ const Recipes = () => {
             </div>
 
 
-            {/* --- Recipes List --- */}
+            {/* --- Recipes List (MODIFIED) --- */}
             <h2>🏠 My Saved Recipes</h2>
             <ul>
                 {recipes.map((r) => (
                     <li key={r.id}>
-                        <div>
+                        <div style={{ flexGrow: 1 }}>
                             <strong>{r.title}</strong>
                             <p style={{ margin: '0', fontSize: '0.9rem', color: '#666' }}>
                                 {r.description}
                             </p>
                         </div>
-                        <button
-                            className="generate-btn"
-                            onClick={navigateToShoppingListAndRegenerate}
-                        >
-                            Check Supplies 🛒
-                        </button>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                className="generate-btn"
+                                onClick={navigateToShoppingListAndRegenerate}
+                            >
+                                Check Supplies 🛒
+                            </button>
+                            <button
+                                className="delete-btn"
+                                onClick={() => handleDeleteRecipe(r.id, r.title)}
+                            >
+                                Delete 🗑️
+                            </button>
+                        </div>
                     </li>
                 ))}
             </ul>
 
-            {/* --- Recipe Ingredients Table --- */}
+            {/* --- Recipe Ingredients Detail Card Display --- */}
             <h2>📋 Recipe Ingredients Detail</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th style={{ width: '30%' }}>Recipe</th>
-                        <th style={{ width: '30%' }}>Ingredient</th>
-                        <th style={{ width: '20%' }}>Quantity</th>
-                        <th style={{ width: '20%' }}>Unit</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {recipeIngredients.map((ri) => (
-                        <tr key={ri.id}>
-                            <td>{ri.recipe_title}</td>
-                            <td>{ri.ingredient_name}</td>
-                            <td>{ri.quantity}</td>
-                            <td>{ri.unit}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <div className="card-grid">
+                {recipeIngredients.length > 0 ? (
+                    recipeIngredients.map((ri) => (
+                        <div key={ri.id} className="card">
+                            <p className="card-title">{ri.ingredient_name}</p>
+                            <p className="card-detail"><strong>For Recipe:</strong> {ri.recipe_title}</p>
+                            <p className="card-detail"><strong>Quantity:</strong> {ri.quantity} {ri.unit}</p>
+                        </div>
+                    ))
+                ) : (
+                    <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontStyle: 'italic' }}>
+                        Add some ingredients to your recipes above!
+                    </p>
+                )}
+            </div>
         </>
     );
 };

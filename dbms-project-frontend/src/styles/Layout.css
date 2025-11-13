@@ -1,16 +1,53 @@
+/* --- Global Variables (Light Mode Default) --- */
+:root {
+    --bg-app: #f7f7f7;
+    --bg-sidebar: #fffefb;
+    --bg-content-box: #fffefb; 
+    --bg-list-item-hover: #fff3e0;
+
+    --border-primary: #eee;
+    --border-list-active: #d35400; 
+    --border-list-base: #f39c12;
+
+    --text-primary: #333;
+    --text-special: #e67e22; 
+    --text-accent: #d35400; 
+}
+
+/* --- Dark Mode Overrides --- */
+.dark {
+    --bg-app: #121212; 
+    --bg-sidebar: #1e1e1e;
+    --bg-content-box: #2d2d2d; 
+    --bg-list-item-hover: #3c3c3c;
+
+    --border-primary: #444;
+    --border-list-active: #f39c12; 
+    --border-list-base: #e67e22;
+
+    --text-primary: #f0f0f0;
+    --text-special: #ffb86c; 
+    --text-accent: #f39c12; 
+}
+
 /* General Layout Structure */
 .app-layout {
     display: flex;
     min-height: 100vh;
-    background-color: #f7f7f7; /* Light background for the whole app */
+    width: 100vw;
+    background-color: var(--bg-app);
 }
 
 /* Sidebar Styling */
 .sidebar {
     width: 250px;
-    background-color: #fffefb; /* Same as your old home-container */
+    height: 90vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: var(--bg-sidebar); 
     padding: 30px 20px;
-    border-right: 1px solid #eee;
+    border-right: 1px solid var(--border-primary); 
     display: flex;
     flex-direction: column;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
@@ -19,7 +56,7 @@
 .logo {
     font-size: 1.5rem;
     font-weight: 600;
-    color: #e67e22;
+    color: var(--text-special); 
     margin-bottom: 40px;
     text-align: center;
 }
@@ -28,12 +65,12 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
-    flex-grow: 1; /* Pushes the logout button to the bottom */
+    flex-grow: 1; 
 }
 
 .nav-link {
     text-decoration: none;
-    color: #333;
+    color: var(--text-primary); 
     padding: 12px 15px;
     border-radius: 8px;
     transition: all 0.2s ease;
@@ -42,16 +79,16 @@
 }
 
 .nav-link:hover {
-    background-color: #fff3e0;
-    color: #e67e22;
-    border-left: 5px solid #f39c12;
+    background-color: var(--bg-list-item-hover); 
+    color: var(--text-special); 
+    border-left: 5px solid var(--border-list-base); 
 }
 
 .nav-link.active {
-    background-color: #ffe0b3;
-    color: #d35400;
+    background-color: var(--bg-list-item-hover);
+    color: var(--text-accent); 
     font-weight: 700;
-    border-left: 5px solid #d35400;
+    border-left: 5px solid var(--border-list-active); 
 }
 
 .logout-btn {
@@ -70,18 +107,38 @@
     background-color: #c0392b;
 }
 
+/* Theme Toggle Button Style */
+.theme-toggle-btn {
+    background-color: #34495e; 
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s ease;
+    margin-top: 20px;
+}
+
+.theme-toggle-btn:hover {
+    background-color: #2c3e50;
+}
+
 /* Main Content Area */
 .content-area {
     flex-grow: 1;
     padding: 20px;
+    background-color: var(--bg-app); 
 }
 
-/* Reusing your old home-container styling for the content wrapper */
+/* Content Wrapper (The centered box containing the page content) */
 .content-wrapper {
-    max-width: 1000px;
-    margin: 30px auto;
+    /* REINTRODUCED FIXED WIDTH AND CENTERING */
+    max-width: 1000px; /* <--- FIXED WIDTH */
+    width: auto;      
+    margin: 30px auto; /* <--- CENTERED */
     padding: 30px;
-    background-color: #fffefb;
+    background-color: var(--bg-content-box); 
     border-radius: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     font-family: "Poppins", sans-serif;
@@ -101,7 +158,7 @@
         justify-content: space-between;
         align-items: center;
         border-right: none;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border-primary); 
     }
     
     .logo {
@@ -122,11 +179,11 @@
     }
     .nav-link:hover {
         border-left: none;
-        border-bottom: 3px solid #f39c12;
+        border-bottom: 3px solid var(--border-list-base);
     }
     .nav-link.active {
         border-left: none;
-        border-bottom: 3px solid #d35400;
+        border-bottom: 3px solid var(--border-list-active); 
         background-color: transparent;
     }
 
@@ -139,7 +196,10 @@
         padding: 10px;
     }
     .content-wrapper {
-        margin: 10px auto;
+        /* On mobile, allow the content to fill the width */
+        max-width: 100%; 
+        width: auto;
+        margin: 10px; 
         padding: 15px;
     }
 }

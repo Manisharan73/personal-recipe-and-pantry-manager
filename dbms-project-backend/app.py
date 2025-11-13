@@ -7,6 +7,7 @@ import datetime
 import jwt
 from mysql.connector import Error
 import traceback
+from functools import wraps # NEW IMPORT
 
 app = Flask(__name__)
 # IMPORTANT: Adjust origins for production
@@ -25,7 +26,41 @@ def get_db_connection():
         database="project"
     )
 
+# --- JWT DECORATOR (New Security Implementation) 🔐 ---
+
+def token_required(f):
+    """
+    Decorator to verify JWT token in cookies and inject the user_id into the route function.
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.cookies.get("token")
+        if not token:
+            # Check for Authorization header as a fallback/alternative, though cookies are preferred for web apps
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+            else:
+                return jsonify({"message": "Authentication token is missing"}), 401
+        
+        try:
+            # Decode the token
+            data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+            # Inject the user_id into the keyword arguments of the decorated function
+            kwargs['user_id'] = data["user_id"] 
+        except jwt.ExpiredSignatureError:
+            return jsonify({"message": "Authentication token has expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"message": "Invalid authentication token"}), 401
+        except Exception:
+            return jsonify({"message": "Token verification error"}), 401
+            
+        return f(*args, **kwargs)
+    return decorated
+
+
 # --- USER AUTH ROUTES 🔐 ---
+# These remain largely unchanged, as they handle token creation/verification.
 
 @app.route("/signup", methods=["POST"])
 def signup():
@@ -89,7 +124,7 @@ def login():
             algorithm="HS256",
         )
 
-        resp = make_response(jsonify({"message": "Login successful"}))
+        resp = make_response(jsonify({"message": "Login successful", "user_id": user["id"]}))
         resp.set_cookie("token", token, httponly=True, samesite="Lax")
         return resp, 200
     except Exception as e:
@@ -110,13 +145,16 @@ def verify_token():
 
     try:
         decoded = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
-        cursor.execute("SELECT username FROM users WHERE id = %s", (decoded["user_id"],))
+        # Now we also return the user_id so the frontend can use it (since it's no longer in the URL)
+        user_id = decoded["user_id"] 
+        
+        cursor.execute("SELECT username FROM users WHERE id = %s", (user_id,))
         user = cursor.fetchone()
 
         if not user:
             return jsonify({"logged_in": False}), 401
 
-        return jsonify({"logged_in": True, "username": user["username"]}), 200
+        return jsonify({"logged_in": True, "username": user["username"], "user_id": user_id}), 200
 
     except jwt.ExpiredSignatureError:
         return jsonify({"logged_in": False, "message": "Token expired"}), 401
@@ -132,43 +170,26 @@ def verify_token():
 def logout():
     """Removes the authentication cookie (JWT) to log the user out."""
     resp = make_response(jsonify({"message": "Logged out successfully"}), 200)
-    # The key to logging out is setting the cookie's expiration to a past date
     resp.set_cookie("token", "", expires=0, httponly=True, samesite="Lax")
     return resp
     
-# --- GET DATA ROUTES 🥗 ---
+# --- GET DATA ROUTES (MODIFIED TO USE DECORATOR) 🥗 ---
 
-@app.route("/get-pantry", methods=["GET"])
-def get_pantry():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute(
-            """
-            SELECT pantry.*, ingredient.name AS ingredient_name
-            FROM pantry
-            JOIN ingredient ON pantry.ingredient_id = ingredient.id
-            """
-        )
-        rows = cursor.fetchall()
-        return jsonify(rows)
-    except Exception as e:
-        print("MySQL Error:", e)
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
-        conn.close()
+# Note: The original /get-pantry route was fetching all pantry items, which is unsafe.
+# I'm keeping the original function name and changing it to use the new decorator
+# and enforce user-specific retrieval.
 
-@app.route("/pantry/<user_id>", methods=["GET"])
+@app.route("/pantry", methods=["GET"])
+@token_required
 def get_pantry_by_user(user_id):
+    # user_id is passed by the token_required decorator
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
         cursor.execute(
             """
             SELECT pantry.id, pantry.ingredient_id, pantry.quantity, pantry.unit, 
-                    pantry.expiration_date, ingredient.name AS name
+                   pantry.expiration_date, ingredient.name AS name
             FROM pantry
             JOIN ingredient ON pantry.ingredient_id = ingredient.id
             WHERE pantry.user_id = %s
@@ -179,11 +200,13 @@ def get_pantry_by_user(user_id):
         return jsonify(rows), 200
     except Exception as e:
         print(f"Error getting pantry for user {user_id}: {e}")
+        traceback.print_exc()
         return jsonify({"error": "Failed to fetch pantry items"}), 500
     finally:
         cursor.close()
         conn.close()
 
+# /ingredients does not need authentication if it lists global ingredients
 @app.route("/ingredients", methods=["GET"])
 def get_all_ingredients():
     """Fetches all ingredients from the database."""
@@ -201,9 +224,10 @@ def get_all_ingredients():
         cursor.close()
         conn.close()
 
-
-@app.route("/recipes/<user_id>", methods=["GET"])
+@app.route("/recipes", methods=["GET"])
+@token_required
 def get_recipes(user_id):
+    # user_id is passed by the token_required decorator
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -217,8 +241,10 @@ def get_recipes(user_id):
         cursor.close()
         conn.close()
 
-@app.route("/recipe-ingredients/<user_id>", methods=["GET"])
+@app.route("/recipe-ingredients", methods=["GET"])
+@token_required
 def get_recipe_ingredients(user_id):
+    # user_id is passed by the token_required decorator
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -241,8 +267,10 @@ def get_recipe_ingredients(user_id):
         cursor.close()
         conn.close()
 
-@app.route("/shopping-list/<user_id>", methods=["GET"])
+@app.route("/shopping-list", methods=["GET"])
+@token_required
 def get_shopping_list(user_id):
+    # user_id is passed by the token_required decorator
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -264,15 +292,19 @@ def get_shopping_list(user_id):
         cursor.close()
         conn.close()
 
-# --- POST/UPDATE/DELETE ROUTES 🛒 ---
+# --- POST/UPDATE/DELETE ROUTES (MODIFIED TO USE DECORATOR) 🛒 ---
+# Note: For POST/PATCH/DELETE, data (like item_id) is taken from the JSON body or URL,
+# while the critical user_id is taken from the token.
 
-@app.route("/buy-item/<user_id>/<item_id>", methods=["POST"])
+@app.route("/buy-item/<item_id>", methods=["POST"])
+@token_required
 def buy_item(user_id, item_id):
-    """Handles checking out an item from the shopping list and adding it to the pantry."""
+    """Handles checking out an item from the shopping list and adding it to the pantry, enforcing unit match."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
+        # 1. Get item from shopping list (ensure user ownership)
         cursor.execute("""
             SELECT ingredient_id, quantity, unit
             FROM shopping_list
@@ -281,31 +313,48 @@ def buy_item(user_id, item_id):
         item = cursor.fetchone()
 
         if not item:
-            return jsonify({"error": "Item not found in shopping list"}), 404
+            return jsonify({"error": "Item not found in shopping list or does not belong to user"}), 404
 
+        # 2. Check for existing pantry item
         cursor.execute("""
-            SELECT id, quantity FROM pantry WHERE user_id = %s AND ingredient_id = %s
+            SELECT id, quantity, unit FROM pantry 
+            WHERE user_id = %s AND ingredient_id = %s
         """, (user_id, item["ingredient_id"]))
         existing = cursor.fetchone()
 
-        # Default expiration of 30 days from purchase
         expiration_date = datetime.date.today() + datetime.timedelta(days=30)
         
         if existing:
-            new_qty = float(existing["quantity"]) + float(item["quantity"])
-            cursor.execute("UPDATE pantry SET quantity = %s, expiration_date = %s WHERE id = %s", (new_qty, expiration_date, existing["id"]))
+            # 3. CRITICAL: Check unit consistency
+            if existing["unit"] != item["unit"]:
+                # If units don't match, we insert a new pantry item instead of updating the existing one.
+                # This prevents incorrect quantity summing (e.g., adding 1 cup to 500g).
+                pantry_id = str(uuid.uuid4())
+                cursor.execute("""
+                    INSERT INTO pantry (id, user_id, ingredient_id, quantity, unit, expiration_date)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (pantry_id, user_id, item["ingredient_id"], item["quantity"], item["unit"], expiration_date))
+                message = "Item added as a separate entry because units differed from existing stock."
+            else:
+                # Units match, safe to combine
+                new_qty = float(existing["quantity"]) + float(item["quantity"])
+                cursor.execute("UPDATE pantry SET quantity = %s, expiration_date = %s WHERE id = %s", 
+                               (new_qty, expiration_date, existing["id"]))
+                message = "Item purchased and combined with existing pantry stock."
         else:
+            # Insert new item
             pantry_id = str(uuid.uuid4())
             cursor.execute("""
                 INSERT INTO pantry (id, user_id, ingredient_id, quantity, unit, expiration_date)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (pantry_id, user_id, item["ingredient_id"], item["quantity"], item["unit"], expiration_date))
+            message = "Item purchased and added to pantry."
 
-        # Delete from shopping list
+        # 4. Delete from shopping list
         cursor.execute("DELETE FROM shopping_list WHERE id = %s", (item_id,))
 
         conn.commit()
-        return jsonify({"message": "Item purchased and added to pantry"}), 200
+        return jsonify({"message": message}), 200
 
     except Exception as e:
         print("MySQL Error:", e)
@@ -316,27 +365,31 @@ def buy_item(user_id, item_id):
         conn.close()
 
 @app.route("/buy-new-item", methods=["POST"])
-def buy_new_item():
-    """Handles buying an item not previously on the shopping list and adding it to the pantry."""
+@token_required
+def buy_new_item(user_id):
+    """Handles buying an item not on the shopping list and adding it to the pantry, enforcing unit match."""
     data = request.json
-    user_id = data.get("user_id")
     ingredient_name = data.get("name")
     quantity = data.get("quantity")
     unit = data.get("unit")
     exp_date_str = data.get("expiration_date")
 
-    if not all([user_id, ingredient_name, quantity, unit]):
-        return jsonify({"error": "Missing required fields (user_id, name, quantity, unit)"}), 400
+    if not all([ingredient_name, quantity, unit]):
+        return jsonify({"error": "Missing required fields (name, quantity, unit)"}), 400
 
+    try:
+        quantity = float(quantity) # Type Coercion/Validation
+    except ValueError:
+         return jsonify({"error": "Quantity must be a valid number."}), 400
+         
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # 1. Find or create ingredient
+        # 1. Find or create ingredient (unchanged)
         cursor.execute("SELECT id FROM ingredient WHERE name = %s", (ingredient_name,))
         ingredient_row = cursor.fetchone()
-        ingredient_id = None
-
+        # ... (rest of finding/creating ingredient is unchanged)
         if ingredient_row:
             ingredient_id = ingredient_row["id"]
         else:
@@ -347,26 +400,47 @@ def buy_new_item():
             )
             conn.commit()
 
-        # 2. Determine expiration date
+
+        # 2. Determine expiration date (unchanged)
         if exp_date_str:
-            expiration_date = datetime.date.fromisoformat(exp_date_str)
+            # Add basic date format validation
+            try:
+                expiration_date = datetime.date.fromisoformat(exp_date_str)
+            except ValueError:
+                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
         else:
             expiration_date = datetime.date.today() + datetime.timedelta(days=30)
 
         # 3. Update or insert into pantry
         cursor.execute(
-            "SELECT id, quantity FROM pantry WHERE user_id = %s AND ingredient_id = %s",
+            "SELECT id, quantity, unit FROM pantry WHERE user_id = %s AND ingredient_id = %s",
             (user_id, ingredient_id),
         )
         existing_pantry_item = cursor.fetchone()
+        
+        message = ""
 
         if existing_pantry_item:
-            new_qty = float(existing_pantry_item["quantity"]) + float(quantity)
-            cursor.execute(
-                "UPDATE pantry SET quantity = %s, expiration_date = %s WHERE id = %s",
-                (new_qty, expiration_date, existing_pantry_item["id"]),
-            )
-            message = f"Pantry updated: Added {quantity} {unit} of {ingredient_name}. Total: {new_qty} {unit}"
+            # CRITICAL: Check unit consistency
+            if existing_pantry_item["unit"].lower() == unit.lower():
+                 # Units match, safe to combine
+                new_qty = float(existing_pantry_item["quantity"]) + quantity
+                cursor.execute(
+                    "UPDATE pantry SET quantity = %s, expiration_date = %s WHERE id = %s",
+                    (new_qty, expiration_date, existing_pantry_item["id"]),
+                )
+                message = f"Pantry updated: Added {quantity} {unit} of {ingredient_name}. Total: {new_qty} {unit}"
+            else:
+                 # Units don't match, insert as new entry
+                pantry_id = str(uuid.uuid4())
+                cursor.execute(
+                    """
+                    INSERT INTO pantry (id, user_id, ingredient_id, quantity, unit, expiration_date)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """,
+                    (pantry_id, user_id, ingredient_id, quantity, unit, expiration_date),
+                )
+                message = f"Pantry item added: {quantity} {unit} of {ingredient_name}. (Units were inconsistent, added separately.)"
         else:
             pantry_id = str(uuid.uuid4())
             cursor.execute(
@@ -382,6 +456,7 @@ def buy_new_item():
         return jsonify({"message": message}), 201
 
     except Error as e:
+        # ... (rest of error handling is unchanged)
         print("MySQL Error:", e)
         traceback.print_exc()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
@@ -394,7 +469,8 @@ def buy_new_item():
         conn.close()
 
 @app.route("/recipe-ingredient", methods=["POST"])
-def add_recipe_ingredient():
+@token_required
+def add_recipe_ingredient(user_id):
     """Handles adding an ingredient to a specific recipe."""
     data = request.json
     recipe_id = data.get("recipe_id")
@@ -409,14 +485,15 @@ def add_recipe_ingredient():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Validation (simplified)
+        # Validation: Check if ingredient exists
         cursor.execute("SELECT id FROM ingredient WHERE id = %s", (ingredient_id,))
         if not cursor.fetchone():
             return jsonify({"error": "Invalid ingredient_id"}), 400
         
-        cursor.execute("SELECT id FROM recipe WHERE id = %s", (recipe_id,))
+        # Validation: Check if recipe exists AND belongs to the user
+        cursor.execute("SELECT id FROM recipe WHERE id = %s AND user_id = %s", (recipe_id, user_id))
         if not cursor.fetchone():
-            return jsonify({"error": "Invalid recipe_id"}), 400
+            return jsonify({"error": "Invalid recipe_id or recipe does not belong to user"}), 403
 
         ri_id = str(uuid.uuid4())
         cursor.execute(
@@ -434,15 +511,17 @@ def add_recipe_ingredient():
         conn.close()
 
 @app.route("/recipe", methods=["POST"])
-def add_recipe():
+@token_required
+def add_recipe(user_id):
     """Adds a new recipe to the database."""
     data = request.json
-    user_id = data.get("user_id")
     title = data.get("title")
     description = data.get("description")
     
-    if not all([user_id, title]):
-        return jsonify({"error": "Missing required fields (user_id, title)"}), 400
+    # user_id is passed by the token_required decorator
+
+    if not title:
+        return jsonify({"error": "Missing required field (title)"}), 400
 
     try:
         conn = get_db_connection()
@@ -469,19 +548,20 @@ def add_recipe():
 
 # --- THE MODIFIED SHOPPING LIST GENERATION ROUTE (WITH DELETION) ---
 
-@app.route("/generate-shopping-list/<user_id>", methods=["POST"])
+@app.route("/generate-shopping-list", methods=["POST"])
+@token_required
 def generate_shopping_list(user_id):
     """
     Generates a shopping list based on missing recipe ingredients 
     AND expiring pantry items. It also automatically deletes truly expired items.
     """
+    # user_id is passed by the token_required decorator
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         today = datetime.date.today()
 
         # 1. DELETE TRULY EXPIRED ITEMS
-        # Items with expiration_date strictly LESS than today are removed from pantry.
         cursor.execute(
             """
             DELETE FROM pantry
@@ -496,9 +576,7 @@ def generate_shopping_list(user_id):
         cursor.execute("DELETE FROM shopping_list WHERE user_id = %s", (user_id,))
         conn.commit()
 
-        # --- A. Check for EXPIRING Pantry Items (Still in Pantry, but close to expiration) ---
-        # Define the expiration threshold for buying replacements (e.g., 7 days from now)
-        # We use today's date + 7 days, and filter items that are NOT already expired (but will be soon).
+        # --- A. Check for EXPIRING Pantry Items ---
         expiration_threshold = today + datetime.timedelta(days=7)
         
         # Get ingredients that will expire soon (today or within 7 days)
@@ -517,7 +595,6 @@ def generate_shopping_list(user_id):
         
         # Add expiring items to the shopping list (full replacement quantity)
         for item in expiring_items:
-            # Only add to the list if they are not already past today's date (those should have been deleted)
             if item["quantity"] > 0: 
                  shopping_list_items[item["ingredient_id"]] = {
                     "quantity": float(item["quantity"]),
@@ -575,11 +652,9 @@ def generate_shopping_list(user_id):
         insert_statements = []
         for ing_id, item_data in shopping_list_items.items():
             sl_id = str(uuid.uuid4())
-            # Prepare the arguments tuple for the execute call
             insert_statements.append((sl_id, user_id, ing_id, item_data["quantity"], item_data["unit"]))
         
         if insert_statements:
-            # Use executemany for efficiency
             cursor.executemany(
                 """
                 INSERT INTO shopping_list (id, user_id, ingredient_id, quantity, unit)
@@ -602,6 +677,56 @@ def generate_shopping_list(user_id):
         print("General Error:", e)
         traceback.print_exc()
         return jsonify({"error": f"Server error: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route("/pantry/<pantry_id>", methods=["DELETE"])
+@token_required
+def delete_pantry_item(user_id, pantry_id):
+    """Deletes a specific pantry item, ensuring it belongs to the authenticated user."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "DELETE FROM pantry WHERE id = %s AND user_id = %s",
+            (pantry_id, user_id),
+        )
+        conn.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Pantry item not found or does not belong to user"}), 404
+            
+        return jsonify({"message": "Pantry item deleted successfully"}), 200
+    except Error as e:
+        print(f"Database Error: {e}")
+        return jsonify({"error": "Failed to delete pantry item"}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route("/recipe/<recipe_id>", methods=["DELETE"])
+@token_required
+def delete_recipe(user_id, recipe_id):
+    """Deletes a recipe and its associated ingredients, ensuring it belongs to the authenticated user."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Check if recipe belongs to the user
+        cursor.execute("SELECT id FROM recipe WHERE id = %s AND user_id = %s", (recipe_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"error": "Recipe not found or does not belong to user"}), 404
+
+        # 1. Delete associated recipe_ingredient entries (Cascade Delete)
+        cursor.execute("DELETE FROM recipe_ingredient WHERE recipe_id = %s", (recipe_id,))
+        
+        # 2. Delete the recipe itself
+        cursor.execute("DELETE FROM recipe WHERE id = %s", (recipe_id,))
+        conn.commit()
+        
+        return jsonify({"message": "Recipe and all associated ingredients deleted successfully"}), 200
+    except Error as e:
+        print(f"Database Error: {e}")
+        return jsonify({"error": "Failed to delete recipe"}), 500
     finally:
         cursor.close()
         conn.close()

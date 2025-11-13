@@ -1,308 +1,397 @@
+/* --- Global Variables (Light Mode Default) --- */
+:root {
+    /* Variables from Layout: --bg-app, --bg-sidebar, --bg-content-box, --text-primary, --text-accent, --border-list-base */
+
+    --bg-card: #fffefb;
+    --bg-expiring: #fff3e0;
+    --bg-list-item: #fffaf1;
+    --bg-message: #fff8e1;
+    --bg-add-section: #ffffff;
+    
+    --border-card: #f0d9b5;
+    --border-input: #ddd;
+
+    --text-secondary: #555;
+    --text-expiring: #e67e22; 
+    --text-message: #856404;
+}
+
+/* --- Dark Mode Overrides for Content --- */
+.dark {
+    --bg-card: #2d2d2d;
+    --bg-expiring: #4a382e;
+    --bg-list-item: #252525;
+    --bg-message: #3a3a2e;
+    --bg-add-section: #252525;
+    
+    --border-card: #3c3c3c;
+    --border-input: #444;
+
+    --text-secondary: #bbb;
+    --text-expiring: #ffb86c;
+    --text-message: #ffb86c;
+}
+
+/* --- Core Page Styles (Uses Variables) --- */
+
 .hc-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-  min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    min-height: 100vh;
 }
 
 .home-container {
-  max-width: 1000px;
-  margin: 50px auto;
-  padding: 30px;
-  background-color: #fffefb;
-  border-radius: 16px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); /* Slightly heavier shadow */
-  font-family: "Poppins", sans-serif;
+    /* Style used for reference/deprecated */
+    max-width: 200vw;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: var(--bg-content-box); 
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    font-family: "Poppins", sans-serif;
 }
 
 h1, h2 {
-  color: #333;
-  text-align: center;
-  margin-bottom: 20px;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 h1 {
-  font-size: 2.2rem; /* Slightly larger */
-  color: #e67e22;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    font-size: 2.2rem;
+    color: var(--text-special);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 h2 {
-  font-size: 1.5rem;
-  margin-top: 40px;
-  border-bottom: 2px solid #f0c27b;
-  padding-bottom: 8px;
-  color: #d35400; /* Darker orange for better contrast */
-  text-align: left; /* Align h2s to the left */
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-  font-size: 0.95rem;
-  background-color: #fff;
-  border-radius: 8px;
-  overflow: hidden; /* For rounded corners on the table */
-}
-
-table thead {
-  background-color: #ffcc80; /* Brighter header color */
-  color: #333;
-}
-
-table th, table td {
-  border: 1px solid #f0e6d2; /* Lighter border */
-  padding: 12px 15px; /* More padding */
-  text-align: left; /* Align table content to the left */
-}
-
-table th:last-child, table td:last-child {
-  text-align: center; /* Keep actions/quantities centered if needed */
-}
-
-table tr:nth-child(even) {
-  background-color: #fff7ec;
-}
-
-table tr:hover {
-  background-color: #fef1e4;
-  transition: background-color 0.2s ease;
+    font-size: 1.5rem;
+    margin-top: 40px;
+    border-bottom: 2px solid var(--border-card);
+    padding-bottom: 8px;
+    color: var(--text-accent); 
+    text-align: left;
+    margin-bottom: 20px; 
 }
 
 ul {
-  list-style-type: none;
-  padding: 0;
-  margin-top: 15px;
+    list-style-type: none;
+    padding: 0;
+    margin-top: 15px;
 }
 
 ul li {
-  background: #fffaf1;
-  margin: 10px 0; /* More margin */
-  padding: 15px 20px; /* More padding */
-  border-radius: 10px; /* Rounder corners */
-  border-left: 6px solid #f39c12; /* Thicker border */
-  transition: 0.2s ease;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.05rem; /* Slightly larger text */
+    background: var(--bg-list-item); 
+    margin: 10px 0;
+    padding: 15px 20px;
+    border-radius: 10px;
+    border-left: 6px solid var(--border-list-base); 
+    transition: 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.05rem;
+    color: var(--text-primary); 
 }
 
 ul li:hover {
-  transform: translateY(-2px); /* Lift effect */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Subtle shadow on hover */
-  background-color: #fff3e0;
-}
-
-.generate-btn {
-  background-color: #f39c12;
-  color: white;
-  border: none;
-  border-radius: 8px; /* Rounder corners */
-  padding: 8px 16px; /* More padding */
-  cursor: pointer;
-  transition: 0.2s ease;
-  font-size: 0.95rem;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.generate-btn:hover {
-  background-color: #e67e22;
-  transform: scale(1.02);
-}
-
-/* NEW: Buy button for Shopping List */
-.buy-btn {
-  background-color: #27ae60;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: 0.2s ease;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.buy-btn:hover {
-  background-color: #2ecc71;
-  transform: scale(1.02);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    background-color: var(--bg-list-item-hover); 
 }
 
 .message-box {
-  text-align: center;
-  margin: 15px 0; /* More margin */
-  padding: 15px;
-  border-radius: 8px;
-  background-color: #fff8e1; /* Lighter background for message */
-  color: #856404;
-  border: 1px solid #ffeeba;
-  font-weight: 600;
+    text-align: center;
+    margin: 15px 0;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: var(--bg-message); 
+    color: var(--text-message); 
+    border: 1px solid var(--border-card); 
+    font-weight: 600;
 }
 
 .add-recipe-section {
-  margin-top: 40px;
-  padding: 25px; /* More padding */
-  background-color: #ffffff; /* White background for separation */
-  border-radius: 12px;
-  border: 1px solid #f0d9b5;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.3s ease;
+    margin-top: 40px;
+    padding: 25px;
+    background-color: var(--bg-add-section); 
+    border-radius: 12px;
+    border: 1px solid var(--border-card); 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
 }
 
 .add-recipe-section:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
 .add-recipe-section h2 {
-  text-align: left;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #f0c27b;
-  padding-bottom: 8px;
-  font-size: 1.4rem;
-  color: #d35400;
+    text-align: left;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-card); 
+    padding-bottom: 8px;
+    font-size: 1.4rem;
+    color: var(--text-accent); 
 }
 
 .add-recipe-section form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px; /* More space between form elements */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .add-recipe-section input,
 .add-recipe-section select {
-  padding: 12px 15px; /* More padding */
-  border-radius: 8px; /* Rounder corners */
-  border: 1px solid #ddd;
-  font-family: inherit;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background-color: #fff;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-input); 
+    font-family: inherit;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: var(--bg-add-section); 
+    color: var(--text-primary); 
 }
 
 .add-recipe-section input:focus,
 .add-recipe-section select:focus {
-  outline: none;
-  border-color: #f39c12;
-  box-shadow: 0 0 8px rgba(243, 156, 18, 0.4);
+    outline: none;
+    border-color: #f39c12;
+    box-shadow: 0 0 8px rgba(243, 156, 18, 0.4);
 }
-
-.add-recipe-btn {
-  background-color: #f39c12;
-  color: white;
-  border: none;
-  padding: 12px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 10px;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Added shadow */
-}
-
-.add-recipe-btn:hover {
-  background-color: #e67e22;
-  transform: translateY(-1px); /* Slight lift on hover */
-}
-
-/* NEW: Buy New Item button style */
-.buy-new-btn {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  padding: 12px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 10px;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.buy-new-btn:hover {
-  background-color: #2980b9;
-  transform: translateY(-1px);
-}
-
 
 .ingredient-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  margin-bottom: 0; /* Removed bottom margin, using form gap */
-  gap: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .ingredient-row input,
 .ingredient-row select {
-  flex: 1;
-  min-width: 140px;
+    flex: 1;
+    min-width: 140px;
 }
 
-/* Ensure the submit button in ingredient-row spans correctly */
+/* Button styles remain hardcoded */
+.generate-btn {
+    background-color: #f39c12;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.generate-btn:hover {
+    background-color: #e67e22;
+    transform: scale(1.02);
+}
+
+.buy-btn {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.buy-btn:hover {
+    background-color: #2ecc71;
+    transform: scale(1.02);
+}
+
+.add-recipe-btn {
+    background-color: #f39c12;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.add-recipe-btn:hover {
+    background-color: #e67e22;
+    transform: translateY(-1px);
+}
+
+.buy-new-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.buy-new-btn:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
 .ingredient-row .add-recipe-btn {
-    flex: 0 0 auto; /* Do not grow, base on content */
-    margin-top: 0; /* Align with inputs */
-    align-self: flex-end; /* Align the button to the bottom of the row items */
+    flex: 0 0 auto;
+    margin-top: 0;
+    align-self: flex-end;
     min-width: 150px;
 }
 
-/* Media Queries for Responsiveness */
-@media (max-width: 768px) {
-  .home-container {
-    width: 90%;
+.delete-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.delete-btn:hover {
+    background-color: #c0392b;
+    transform: scale(1.02);
+}
+
+table {
+    display: none;
+}
+
+/* --- Card Styles --- */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.card {
+    background-color: var(--bg-card); 
+    border: 1px solid var(--border-card); 
+    border-radius: 12px;
     padding: 20px;
-    margin: 30px auto;
-  }
-
-  table th, table td {
-    font-size: 0.85rem;
-    padding: 8px;
-  }
-
-  h1 {
-    font-size: 1.8rem;
-  }
-  
-  h2 {
-    font-size: 1.3rem;
-  }
-
-  .ingredient-row {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 10px; /* Reduced gap */
-  }
+    justify-content: space-between;
+}
 
-  .add-recipe-section input,
-  .add-recipe-section select,
-  .ingredient-row input,
-  .ingredient-row select {
-    width: 100%;
-    min-width: 100%;
-  }
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
 
-  ul li {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-  }
-  .generate-btn {
-      margin-top: 0;
-      margin-left: 0;
-      width: 100%;
-      padding: 10px;
-  }
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-accent); 
+    margin-bottom: 10px;
+}
 
-  .ingredient-row .add-recipe-btn {
-      width: 100%;
-      min-width: 100%;
-      align-self: auto;
-  }
+.card-detail {
+    font-size: 0.95rem;
+    color: var(--text-secondary); 
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.card-actions {
+    margin-top: 15px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.card.expiring {
+    border: 2px solid var(--text-expiring); 
+    background-color: var(--bg-expiring); 
+}
+
+/* Specific style to override inline color set in Pantry.jsx */
+.card-detail[style*="e67e22"] {
+    color: var(--text-expiring) !important;
+}
+
+
+@media (max-width: 768px) {
+    .home-container {
+        width: 90%;
+        padding: 20px;
+        margin: 30px auto;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    h2 {
+        font-size: 1.3rem;
+    }
+
+    .ingredient-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .add-recipe-section input,
+    .add-recipe-section select,
+    .ingredient-row input,
+    .ingredient-row select {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    ul li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    ul li > div:nth-child(2) { 
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+    
+    .generate-btn,
+    .delete-btn {
+        width: 100%;
+        margin-top: 0;
+        margin-left: 0;
+        padding: 10px;
+    }
+
+    .ingredient-row .add-recipe-btn {
+        width: 100%;
+        min-width: 100%;
+        align-self: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
 }
