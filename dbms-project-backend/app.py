@@ -7,7 +7,7 @@ import datetime
 import jwt
 from mysql.connector import Error
 import traceback
-from functools import wraps # NEW IMPORT
+from functools import wraps
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
